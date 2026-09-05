@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lexio">
+<meta name="theme-color" content="#111827">
+<meta name="format-detection" content="telephone=no">
+<title>Lexio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#111827; --bg2:#1b2333; --line:rgba(255,255,255,.10);
+  --surface:rgba(255,255,255,.045); --surface2:rgba(255,255,255,.08);
+  --txt:#f3f4f6; --dim:#9aa4b2; --faint:#6b7480;
+  --accent:#6ea8fe; --accent2:#3b82f6;
+  --ok:#34d399; --no:#f87171; --gold:#fbbf24; --r:12px;
+  --vh:1vh;                 /* recalculé en JS pour iOS */
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px);
+  --sar:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{font-family:'Inter','Noto Sans',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  background:var(--bg);color:var(--txt);
+  height:100vh; height:calc(var(--vh) * 100); height:100dvh;
+  width:100%;position:fixed;top:0;left:0;
+  overflow:hidden;overscroll-behavior:none;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
+  touch-action:manipulation}
+button,.btn,.chip,.card,.wrow,.tog,.swap,.tbtn,.pairbar,input{
+  touch-action:manipulation;cursor:pointer}
+#bg{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1000px 620px at 50% -12%,rgba(59,130,246,.13),transparent 62%)}
+
+.screen{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:15px;
+  padding:calc(24px + var(--sat)) calc(18px + var(--sar)) calc(24px + var(--sab)) calc(18px + var(--sal));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.screen>*{flex-shrink:0}
+.screen.top{justify-content:flex-start;padding-top:calc(52px + var(--sat))}
+.screen.hidden{display:none}
+
+h1{font-size:clamp(2rem,6.5vw,2.9rem);font-weight:800;letter-spacing:-.03em;line-height:1.05}
+h2{font-size:clamp(1.05rem,3.6vw,1.3rem);font-weight:700;letter-spacing:-.015em;text-align:center}
+.sub{font-size:.88rem;color:var(--dim);text-align:center;max-width:430px;padding:0 8px;line-height:1.55}
+.tiny{font-size:.74rem;color:var(--faint);text-align:center;max-width:420px;line-height:1.5}
+.eyebrow{font-size:.69rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);text-align:center}
+
+.btn{font-family:inherit;font-size:.94rem;font-weight:600;letter-spacing:-.01em;
+  padding:12px 26px;border:none;border-radius:10px;cursor:pointer;
+  transition:background .16s,border-color .16s,opacity .16s;color:var(--txt)}
+.btn-primary{background:var(--accent2);color:#fff}
+.btn-primary:hover{background:#2f74e0}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--surface);color:var(--txt)}
+.btn-sm{font-size:.84rem;padding:9px 17px}
+.btn-danger{color:var(--no);border-color:rgba(248,113,113,.35)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.row{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;align-items:center}
+
+/* barre supérieure persistante */
+#top{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;
+  justify-content:space-between;
+  padding:calc(9px + var(--sat)) calc(14px + var(--sar)) 9px calc(14px + var(--sal));
+  pointer-events:none}
+#top.hidden{display:none}
+.tbtn{pointer-events:auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:10px 16px;font-size:1rem;font-weight:600;color:var(--dim);
+  cursor:pointer;font-family:inherit;transition:background .15s,color .15s;
+  touch-action:manipulation;min-width:46px;min-height:42px;
+  display:flex;align-items:center;justify-content:center}
+.tbtn:active{background:rgba(110,168,254,.25);color:var(--txt)}
+.tbtn:hover{background:var(--surface2);color:var(--txt)}
+#who{pointer-events:none;font-size:.78rem;color:var(--faint);font-weight:600}
+
+.grid{display:grid;gap:8px;width:96vw;max-width:660px}
+.g2{grid-template-columns:repeat(auto-fill,minmax(152px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 13px;cursor:pointer;transition:background .15s,border-color .15s;
+  display:flex;align-items:center;gap:10px;text-align:left;position:relative;overflow:hidden}
+.card:hover{background:var(--surface2);border-color:rgba(110,168,254,.5)}
+.card.on{border-color:var(--accent);background:rgba(110,168,254,.13)}
+.card.done{opacity:.5}
+.card .ic{font-size:1.18rem;width:24px;text-align:center;flex-shrink:0;opacity:.9}
+.card .tx{min-width:0;flex:1}
+.card .t1{font-size:.89rem;font-weight:600;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .t2{font-size:.71rem;color:var(--faint);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.col{flex-direction:column;text-align:center;gap:4px;padding:13px 9px}
+.card.col .ic{width:auto}
+.pbar{position:absolute;left:0;bottom:0;height:2px;background:var(--ok);opacity:.7}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:96vw;max-width:560px}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:9px;
+  padding:8px 12px;cursor:pointer;transition:background .15s,border-color .15s;
+  display:flex;align-items:center;gap:7px;font-size:.84rem;font-weight:500;white-space:nowrap}
+.chip:hover{background:var(--surface2)}
+.chip.on{border-color:var(--accent);background:rgba(110,168,254,.14);font-weight:600}
+.chip .fl{font-size:1.02rem}
+.chip.num{padding:9px 15px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.pairbar{display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:10px 16px;font-size:.9rem;font-weight:600}
+.swap{background:var(--surface2);border:1px solid var(--line);border-radius:8px;
+  width:32px;height:32px;cursor:pointer;color:var(--txt);font-size:.95rem;
+  transition:background .15s;flex-shrink:0;font-family:inherit}
+.swap:hover{background:rgba(110,168,254,.2)}
+
+.tog{display:flex;align-items:center;gap:11px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);padding:11px 15px;cursor:pointer;
+  transition:border-color .15s;font-size:.86rem;font-weight:500}
+.tog.on{border-color:rgba(52,211,153,.5)}
+.sw{width:38px;height:21px;border-radius:11px;background:rgba(255,255,255,.15);
+  position:relative;transition:background .18s;flex-shrink:0}
+.tog.on .sw{background:var(--ok)}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:15px;height:15px;
+  border-radius:50%;background:#fff;transition:transform .18s}
+.tog.on .sw::after{transform:translateX(17px)}
+
+input[type=text]{font-family:inherit;font-size:16px;max-width:88vw;font-weight:600;color:var(--txt);
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:13px 16px;width:320px;outline:none;text-align:center;
+  transition:border-color .15s;user-select:text;-webkit-user-select:text}
+input[type=text]:focus{border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--faint);font-weight:400}
+
+/* statistiques */
+.stats{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden}
+.st{padding:11px 18px;text-align:center;min-width:76px}
+.st b{display:block;font-size:1.28rem;font-weight:700;font-variant-numeric:tabular-nums}
+.st i{font-size:.66rem;color:var(--faint);font-style:normal;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase}
+.st.a b{color:var(--ok)} .st.b b{color:var(--no)} .st.c b{color:var(--dim)}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;
+  justify-content:space-between;
+  padding:calc(11px + var(--sat)) calc(14px + var(--sar)) 11px calc(14px + var(--sal));
+  background:rgba(17,24,39,.94);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line)}
+#hud.hidden{display:none}
+.hs{font-size:1rem;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+.hm{font-size:.73rem;color:var(--dim);text-align:center;font-weight:500;line-height:1.35}
+.hp{font-size:.79rem;color:var(--dim);font-weight:600;font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;gap:9px}
+#bar{position:fixed;top:var(--sat);left:0;height:2px;background:var(--accent);z-index:21;
+  transition:width .25s ease;pointer-events:none}
+#bar.hidden{display:none}
+
+.zone{position:fixed;bottom:calc(20px + var(--sab));z-index:18;
+  width:94px;height:94px;border-radius:16px;touch-action:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:1.5px solid;transition:transform .16s,background .16s,box-shadow .16s;
+  background:var(--surface)}
+.zone .zi{font-size:1.85rem;font-weight:300;line-height:1}
+.zone .zl{font-size:.6rem;font-weight:700;letter-spacing:.09em;opacity:.75}
+.zone.l{left:calc(16px + var(--sal));border-color:rgba(52,211,153,.4);color:var(--ok)}
+.zone.r{right:calc(16px + var(--sar));border-color:rgba(248,113,113,.4);color:var(--no)}
+.zone.hot{transform:scale(1.1)}
+.zone.l.hot{background:rgba(52,211,153,.2);box-shadow:0 0 0 3px rgba(52,211,153,.2)}
+.zone.r.hot{background:rgba(248,113,113,.2);box-shadow:0 0 0 3px rgba(248,113,113,.2)}
+.zone.hidden{display:none}
+
+.bub{position:fixed;background:var(--bg2);border:1px solid rgba(255,255,255,.16);
+  border-radius:14px;padding:16px 24px 18px;cursor:grab;z-index:15;touch-action:none;
+  text-align:center;max-width:80vw;transform:translateX(-50%);
+  box-shadow:0 10px 34px rgba(0,0,0,.42);
+  -webkit-touch-callout:none;-webkit-user-select:none;will-change:top,left}
+.bs{font-size:clamp(1.35rem,4.4vw,1.95rem);font-weight:700;letter-spacing:-.02em;
+  line-height:1.18;word-break:break-word}
+.bi{font-size:clamp(.78rem,2.1vw,.95rem);font-weight:400;color:var(--accent);
+  margin-top:3px;word-break:break-word;opacity:.85}
+.bt{font-size:clamp(.95rem,2.6vw,1.2rem);font-weight:600;color:var(--gold);
+  margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1);
+  line-height:1.25;word-break:break-word}
+.bub.drag{cursor:grabbing;z-index:30;border-color:rgba(255,255,255,.4);
+  transform:translateX(-50%) scale(1.04);box-shadow:0 18px 48px rgba(0,0,0,.55)}
+.bub.y{border-color:var(--ok);background:rgba(52,211,153,.16)}
+.bub.n{border-color:var(--no);background:rgba(248,113,113,.16)}
+
+.pop{position:fixed;pointer-events:none;z-index:50;font-size:1rem;font-weight:700;
+  text-align:center;width:230px;transform:translateX(-50%);animation:up .95s ease-out forwards}
+@keyframes up{0%{opacity:1;transform:translateX(-50%) translateY(0)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-58px)}}
+
+.ring{width:120px;height:120px;border-radius:50%;position:relative;margin:0 auto;
+  background:conic-gradient(var(--accent) calc(var(--p)*1%),rgba(255,255,255,.07) 0);
+  display:flex;align-items:center;justify-content:center}
+.ring::before{content:'';position:absolute;top:9px;right:9px;bottom:9px;left:9px;border-radius:50%;background:var(--bg)}
+.ring span{position:relative;z-index:1;font-size:1.5rem;font-weight:800;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+
+/* liste de mots à cocher */
+.wlist{width:96vw;max-width:560px;max-height:34vh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:5px}
+.wrow{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;
+  cursor:pointer;transition:background .13s}
+.wrow:hover{background:var(--surface2)}
+.wrow.k{opacity:.5}
+.wrow .bx{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--line);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;color:transparent;transition:all .13s}
+.wrow.k .bx{background:var(--ok);border-color:var(--ok);color:#0b1220}
+.wrow .wt{flex:1;min-width:0}
+.wrow .w1{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .w2{font-size:.75rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .mk{font-size:.72rem;font-weight:700;flex-shrink:0}
+.wrow .mk.y{color:var(--ok)} .wrow .mk.n{color:var(--no)}
+
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;z-index:60;background:rgba(10,15,25,.82);
+  display:flex;align-items:center;justify-content:center;padding:22px;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.modal.hidden{display:none}
+.mbox{background:var(--bg2);border:1px solid var(--line);border-radius:14px;
+  padding:22px;max-width:340px;width:100%;text-align:center;display:flex;
+  flex-direction:column;gap:14px}
+
+/* ── chronomètre, badge, progression du mot ── */
+.badge{display:inline-block;padding:6px 15px;border-radius:20px;font-size:.8rem;
+  font-weight:700;letter-spacing:.01em}
+.badge.ok{background:rgba(52,211,153,.18);color:var(--ok);border:1px solid rgba(52,211,153,.45)}
+.badge.no{background:rgba(248,113,113,.18);color:var(--no);border:1px solid rgba(248,113,113,.45)}
+.timebox{display:flex;align-items:baseline;gap:10px;justify-content:center}
+.timebox .tv{font-size:1.95rem;font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.timebox .tt{font-size:.79rem;color:var(--faint);font-weight:600}
+.dots{display:flex;gap:3px;flex-shrink:0;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.16)}
+.dot.f{background:var(--ok)}
+#hud-time{font-variant-numeric:tabular-nums;color:var(--txt);font-weight:700}
+
+/* ── écran d'écriture ── */
+.prod-word{font-size:clamp(1.5rem,5vw,2.1rem);font-weight:700;
+  letter-spacing:-.02em;text-align:center;line-height:1.2}
+.prod-ipa{font-size:.9rem;color:var(--accent);opacity:.85;text-align:center;margin-top:2px}
+#prod-slots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;
+  max-width:96vw;margin:10px 0;align-items:center}
+.slot{width:38px;height:48px;border-radius:9px;
+  border:1.5px dashed rgba(255,255,255,.22);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:700;cursor:pointer;touch-action:manipulation}
+.slot.f{border-style:solid;border-color:var(--accent);background:rgba(110,168,254,.16)}
+.gap{width:16px;height:48px}
+.fixed{min-width:20px;height:48px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;font-weight:700;color:var(--dim);padding:0 2px}
+#prod-tiles{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+  max-width:min(96vw,430px)}
+.tile{min-width:56px;height:60px;padding:0 10px;border-radius:12px;
+  border:1.5px solid rgba(255,255,255,.2);background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.55rem;font-weight:700;cursor:pointer;touch-action:manipulation;
+  transition:transform .1s,background .12s;
+  user-select:none;-webkit-user-select:none}
+.tile:active{transform:scale(.9);background:rgba(110,168,254,.3)}
+.pfb{min-height:28px;font-size:1.02rem;font-weight:700;text-align:center;
+  padding:0 10px;word-break:break-word}
+.pfb.ok{color:var(--ok)} .pfb.no{color:var(--no)}
+</style>
+</head>
+<body>
+<div id="nojs" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
+  background:#111827;color:#f3f4f6;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;padding:28px 22px;
+  font-family:-apple-system,system-ui,sans-serif;text-align:center;overflow:auto">
+  <div style="font-size:2.6rem">&#9888;&#65039;</div>
+  <div style="font-size:1.15rem;font-weight:700;line-height:1.35">
+    JavaScript est désactivé<br>dans cet aperçu
+  </div>
+  <div style="font-size:.92rem;color:#9aa4b2;line-height:1.6;max-width:400px">
+    Tu ouvres ce fichier dans l'aperçu de fichiers d'iOS (Quick&nbsp;Look),
+    qui n'exécute pas les scripts. L'application ne peut pas fonctionner ici.
+  </div>
+  <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;padding:16px 18px;font-size:.88rem;line-height:1.7;
+    max-width:400px;text-align:left;color:#f3f4f6">
+    <b style="display:block;margin-bottom:8px">Pour l'utiliser sur iPhone&nbsp;:</b>
+    <b>1.</b> Mets le fichier en ligne (par exemple sur
+    <span style="color:#6ea8fe">netlify.com/drop</span> ou GitHub&nbsp;Pages),
+    puis ouvre le lien dans Safari.<br><br>
+    <b>2.</b> Ou installe une application de fichiers dont le navigateur
+    exécute les scripts, comme <b>Documents</b> de Readdle&nbsp;: enregistre le
+    fichier dedans et ouvre-le depuis son navigateur intégré.<br><br>
+    <b>3.</b> Une fois ouvert dans Safari&nbsp;: <b>Partager &rarr; Sur l'écran
+    d'accueil</b> pour l'installer comme une vraie application, avec la
+    sauvegarde de la progression.
+  </div>
+  <div style="font-size:.8rem;color:#6b7480">
+    Sur ordinateur et sur Android, il suffit d'ouvrir le fichier normalement.
+  </div>
+</div>
+<div id="bg"></div>
+<div id="err" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;
+  background:#7f1d1d;color:#fff;padding:10px 12px;font-size:12px;line-height:1.4;
+  font-family:monospace;word-break:break-word;max-height:45%;overflow:auto"></div>
+
+<div id="top" class="hidden">
+  <button class="tbtn" id="t-home" type="button" onclick="goHome()">⌂</button>
+  <div id="who"></div>
+  <button class="tbtn" id="t-quit" onclick="askQuit()" style="visibility:hidden">✕</button>
+</div>
+
+<!-- 1. PROFIL -->
+<div class="screen" id="p-profile">
+  <h1>Lexio</h1>
+  <div class="sub" id="brand-sub">Apprendre le vocabulaire</div>
+  <div class="eyebrow" style="margin-top:6px" id="l-uilang">Langue de l'interface</div>
+  <div class="chips" id="ui-langs">
+    <div class="chip on" data-ui="fr"><span class="fl">&#127467;&#127479;</span><span>Français</span></div>
+    <div class="chip" data-ui="en"><span class="fl">&#127468;&#127463;</span><span>English</span></div>
+    <div class="chip" data-ui="de"><span class="fl">&#127465;&#127466;</span><span>Deutsch</span></div>
+    <div class="chip" data-ui="es"><span class="fl">&#127466;&#127480;</span><span>Español</span></div>
+    <div class="chip" data-ui="it"><span class="fl">&#127470;&#127481;</span><span>Italiano</span></div>
+    <div class="chip" data-ui="ru"><span class="fl">&#127479;&#127482;</span><span>Русский</span></div>
+    <div class="chip" data-ui="pt"><span class="fl">&#127477;&#127481;</span><span>Português</span></div>
+  </div>
+  <div class="eyebrow" style="margin-top:10px" id="l-name">Ton prénom</div>
+  <input type="text" id="name-in" maxlength="18" autocomplete="off"
+         placeholder="Entre ton prénom" enterkeyhint="go">
+  <div class="chips" id="prof-list"></div>
+  <button class="btn btn-primary" id="b-enter" type="button"
+          onclick="enterProfile()">Commencer</button>
+  <div class="tiny" id="save-note"></div>
+</div>
+
+<!-- 2. ACCUEIL -->
+<div class="screen hidden top" id="p-home">
+  <h2 id="hi"></h2>
+  <div class="stats">
+    <div class="st a"><b id="h-known">0</b><i id="l-known"></i></div>
+    <div class="st c"><b id="h-left">0</b><i id="l-left"></i></div>
+    <div class="st"><b id="h-acc">—</b><i id="l-acc"></i></div>
+    <div class="st"><b id="h-games">0</b><i id="l-games"></i></div>
+  </div>
+  <div class="pairbar" style="cursor:pointer" onclick="go('p-pair')">
+    <span id="pv-a"></span><span style="color:var(--faint)">→</span><span id="pv-b"></span>
+  </div>
+  <button class="btn btn-primary" onclick="openThemes()" id="b-play"></button>
+  <div class="row" style="margin-top:4px">
+    <button class="btn btn-ghost btn-sm" onclick="go('p-pair')" id="b-langs"></button>
+    <button class="btn btn-ghost btn-sm" onclick="switchProfile()" id="b-switch"></button>
+  </div>
+  <div class="row">
+    <button class="btn btn-ghost btn-sm btn-danger" onclick="askReset()" id="b-reset"></button>
+  </div>
+</div>
+
+<!-- 3. LANGUES -->
+<div class="screen hidden top" id="p-pair">
+  <h2 id="t-pair"></h2>
+  <div class="eyebrow" id="l-src"></div>
+  <div class="chips" id="src-langs"></div>
+  <div class="pairbar">
+    <span id="pv2-a"></span>
+    <button class="swap" onclick="swap()">⇄</button>
+    <span id="pv2-b"></span>
+  </div>
+  <div class="eyebrow" id="l-tgt"></div>
+  <div class="chips" id="tgt-langs"></div>
+  <div class="tog on" id="tog-phon" onclick="togPhon()"><div class="sw"></div><span id="l-phon"></span></div>
+  <div class="tiny" id="phon-warn"></div>
+  <div class="tog" id="tog-both" onclick="togBoth()"><div class="sw"></div><span id="l-both"></span></div>
+  <div class="tiny" id="both-help"></div>
+  <div class="row" style="margin:4px 0 16px">
+    <button class="btn btn-primary" onclick="goHome()" id="b-ok1"></button>
+  </div>
+</div>
+
+<!-- 4. THÈMES -->
+<div class="screen hidden top" id="p-theme">
+  <h2 id="t-theme"></h2>
+  <div class="grid g2" id="theme-grid"></div>
+  <div class="row" style="margin:4px 0 18px">
+    <button class="btn btn-ghost btn-sm" onclick="goHome()" id="b-back2"></button>
+    <button class="btn btn-primary" onclick="go('p-size')" id="b-next2"></button>
+  </div>
+</div>
+
+<!-- 5. TAILLE + VITESSE -->
+<div class="screen hidden top" id="p-size">
+  <h2 id="t-size"></h2>
+  <div class="eyebrow" id="l-size"></div>
+  <div class="chips" id="size-chips"></div>
+  <div class="eyebrow" style="margin-top:10px" id="l-speed"></div>
+  <div class="grid g3" id="speed-grid" style="width:96vw;max-width:500px"></div>
+  <div class="row" style="margin:6px 0 18px">
+    <button class="btn btn-ghost btn-sm" onclick="openThemes()" id="b-back3"></button>
+    <button class="btn btn-primary" onclick="start()" id="b-go"></button>
+  </div>
+</div>
+
+<!-- JEU -->
+<div id="bar" class="hidden"></div>
+<div id="hud" class="hidden">
+  <div class="hs" id="hud-score">0</div>
+  <div class="hs" id="hud-time">0.0s</div>
+  <div class="hm" id="hud-mid"></div>
+  <div class="hp"><span><span id="hud-i">0</span>/<span id="hud-n">0</span></span>
+    <button class="tbtn" style="padding:4px 9px;font-size:.75rem" onclick="askQuit()">✕</button></div>
+</div>
+<div class="zone l hidden" id="z-ok"><span class="zi">✓</span><span class="zl" id="zl-ok"></span></div>
+<div class="zone r hidden" id="z-no"><span class="zi">✗</span><span class="zl" id="zl-no"></span></div>
+
+<!-- 6. RÉSULTAT + TRI -->
+<div class="screen hidden top" id="p-score">
+  <div class="ring" id="ring" style="--p:0"><span id="sc-num">0/0</span></div>
+  <h2 id="sc-title"></h2>
+  <div class="timebox"><span class="tv" id="sc-time">0.0s</span>
+    <span class="tt" id="sc-target"></span></div>
+  <div><span class="badge" id="sc-badge"></span></div>
+  <div class="tiny" id="l-iknow"></div>
+  <div class="wlist" id="wlist"></div>
+  <div class="eyebrow" style="margin-top:4px" id="l-next"></div>
+  <div class="chips" id="next-chips"></div>
+  <div class="row" style="margin:2px 0 18px">
+    <button class="btn btn-ghost btn-sm" onclick="goHome()" id="b-home2"></button>
+    <button class="btn btn-primary" onclick="continueRound()" id="b-cont"></button>
+  </div>
+</div>
+
+<!-- ÉCRITURE -->
+<div class="screen hidden top" id="p-prod">
+  <div class="eyebrow" id="prod-count"></div>
+  <h2 id="prod-title"></h2>
+  <div class="tiny" id="prod-sub"></div>
+  <div class="prod-word" id="prod-src"></div>
+  <div class="prod-ipa" id="prod-ipa"></div>
+  <div id="prod-slots"></div>
+  <div class="pfb" id="prod-fb"></div>
+  <div id="prod-tiles"></div>
+  <div class="row" style="margin:8px 0 18px">
+    <button class="btn btn-ghost btn-sm" id="b-prod-clear" onclick="prodClear()"></button>
+    <button class="btn btn-ghost btn-sm" id="b-prod-skip" onclick="prodSkip()"></button>
+  </div>
+</div>
+
+<!-- MODALE -->
+<div class="modal hidden" id="modal">
+  <div class="mbox">
+    <div id="m-text" style="font-size:.95rem;line-height:1.5"></div>
+    <div class="row">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()" id="m-no"></button>
+      <button class="btn btn-primary btn-sm" id="m-yes"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* si ce script s'exécute, JavaScript est actif : on retire l'avertissement */
+(function(){
+  var n=document.getElementById('nojs');
+  if(n&&n.parentNode) n.parentNode.removeChild(n);
+})();
+/* capteur d'erreurs : affiche à l'écran tout problème de script */
+(function(){
+  function show(msg){
+    try{
+      var e=document.getElementById('err');
+      if(!e) return;
+      e.style.display='block';
+      e.textContent=(e.textContent?e.textContent+' | ':'')+msg;
+    }catch(_){}
+  }
+  window.__lexioErr=show;
+  window.onerror=function(m,src,line,col){ show('JS: '+m+' @'+line+':'+col); };
+  window.addEventListener('error',function(ev){
+    if(ev&&ev.message) show('JS: '+ev.message);
+  });
+})();
+</script>
+<script>
+const I18N = {
+fr:{
+ name:"Français", flag:"🇫🇷",
+ appSub:"Apprendre le vocabulaire",
+ uiLang:"Langue de l'interface",
+ start:"Commencer", back:"Retour", next:"Suivant",
+ tagline:"Glisse le mot vers ✓ si la traduction est correcte, vers ✗ si elle est fausse.",
+ wordsIn:"Mot affiché en", translatedTo:"Traduit en",
+ swap:"Inverser", showPhon:"Afficher la prononciation",
+ phonWarn:"Prononciation indisponible pour cette langue source.",
+ chooseTheme:"Choisir un thème", theme:"Thème", themes:"Thèmes",
+ chooseSet:"Choisir une série", set:"Série", sets:"Séries",
+ mix:"Mélange", mixSub:"tirage dans tout le thème",
+ chooseSpeed:"Choisir la vitesse", speed:"Vitesse",
+ play:"Jouer", words:"mots", word:"mot",
+ correct:"CORRECT", wrong:"FAUX",
+ plus1:"+1", wasRight:"C'était correct", wasWrong:"C'était faux",
+ score:"Score", result:"Résultat",
+ good:"Justes", missed:"Erreurs", lost:"Manqués",
+ toReview:"À revoir",
+ sameWords:"Rejouer ces mots", newWords:"Nouveaux mots",
+ changeSet:"Changer de série", changeTheme:"Changer de thème",
+ perfect:"Parfait", excellent:"Excellent", notBad:"Pas mal",
+ keepGoing:"Continue", tryAgain:"À revoir",
+ msgPerfect:"Série maîtrisée.", msgExcellent:"Presque tout juste.",
+ msgNotBad:"Encore un peu d'entraînement.", msgKeep:"Persévère.",
+ msgTry:"Relis les mots et réessaie.",
+ level:"Niveau", beginner:"Débutant",
+ slow:"Lent", medium:"Moyen", fast:"Rapide", veryFast:"Très rapide", extreme:"Extrême",
+ profile:"Profil",
+ yourName:"Ton prénom",
+ namePh:"Entre ton prénom",
+ newProfile:"Nouveau profil",
+ hello:"Bonjour",
+ home:"Accueil",
+ progress:"Progression",
+ known:"Acquis",
+ remaining:"À apprendre",
+ accuracy:"Réussite",
+ games:"Parties",
+ allThemes:"Tous les thèmes",
+ iKnowThese:"Coche les mots que tu connais déjà — ils ne reviendront plus.",
+ nextSize:"Mots dans la prochaine liste",
+ continueBtn:"Continuer",
+ nextRound:"Nouvelle liste",
+ sessionWords:"Mots de cette partie",
+ changeProfile:"Changer de profil",
+ deleteProfile:"Supprimer ce profil",
+ resetProgress:"Réinitialiser la progression",
+ confirm:"Confirmer",
+ cancel:"Annuler",
+ allKnown:"Tu connais tous les mots de ce thème !",
+ chooseAnother:"Choisis un autre thème",
+ saveWarn:"Progression enregistrée sur cet appareil.",
+ noSave:"Enregistrement indisponible ici : la progression sera perdue à la fermeture.",
+ quit:"Quitter",
+ known1:"acquis",
+ of:"sur",
+ time:"Temps",
+ target:"Objectif",
+ passed:"Objectif atteint",
+ failed:"Trop lent",
+ timePenalty:"+1 s par erreur",
+ retrySame:"Refaire cette liste",
+ prodTitle:"Écris le mot",
+ prodSub:"Reconstitue la traduction pour valider ce mot",
+ prodOk:"Juste",
+ prodNo:"Raté",
+ clear:"Effacer",
+ skipProd:"Passer",
+ mastered:"Acquis",
+ nearly:"Presque acquis",
+ seen:"vu",
+ times:"fois",
+ avgTime:"Temps moyen",
+ bothWays:"Alterner les deux sens",
+ bothWaysHelp:"Le mot s'affiche tantôt dans une langue, tantôt dans l'autre.",
+ needStreak:"3 bonnes réponses d'affilée puis l'écriture du mot",
+ progressWord:"Progression du mot",
+ unlockProd:"Écriture débloquée",
+ intermediate:"Intermédiaire",
+ expert:"Expert"
+},
+en:{
+ name:"English", flag:"🇬🇧",
+ appSub:"Vocabulary training",
+ uiLang:"Interface language",
+ start:"Start", back:"Back", next:"Next",
+ tagline:"Drag the word to ✓ if the translation is correct, to ✗ if it is wrong.",
+ wordsIn:"Word shown in", translatedTo:"Translated into",
+ swap:"Swap", showPhon:"Show pronunciation",
+ phonWarn:"Pronunciation not available for this source language.",
+ chooseTheme:"Choose a topic", theme:"Topic", themes:"Topics",
+ chooseSet:"Choose a set", set:"Set", sets:"Sets",
+ mix:"Mixed", mixSub:"random from the whole topic",
+ chooseSpeed:"Choose the speed", speed:"Speed",
+ play:"Play", words:"words", word:"word",
+ correct:"CORRECT", wrong:"WRONG",
+ plus1:"+1", wasRight:"That was correct", wasWrong:"That was wrong",
+ score:"Score", result:"Result",
+ good:"Correct", missed:"Mistakes", lost:"Missed",
+ toReview:"To review",
+ sameWords:"Replay these words", newWords:"New words",
+ changeSet:"Change set", changeTheme:"Change topic",
+ perfect:"Perfect", excellent:"Excellent", notBad:"Not bad",
+ keepGoing:"Keep going", tryAgain:"Review needed",
+ msgPerfect:"Set mastered.", msgExcellent:"Almost all correct.",
+ msgNotBad:"A bit more practice.", msgKeep:"Keep at it.",
+ msgTry:"Review the words and try again.",
+ level:"Level", beginner:"Beginner",
+ slow:"Slow", medium:"Medium", fast:"Fast", veryFast:"Very fast", extreme:"Extreme",
+ profile:"Profile",
+ yourName:"Your name",
+ namePh:"Enter your name",
+ newProfile:"New profile",
+ hello:"Hello",
+ home:"Home",
+ progress:"Progress",
+ known:"Known",
+ remaining:"To learn",
+ accuracy:"Accuracy",
+ games:"Rounds",
+ allThemes:"All topics",
+ iKnowThese:"Tick the words you already know — they will not come back.",
+ nextSize:"Words in the next list",
+ continueBtn:"Continue",
+ nextRound:"New list",
+ sessionWords:"Words from this round",
+ changeProfile:"Switch profile",
+ deleteProfile:"Delete this profile",
+ resetProgress:"Reset progress",
+ confirm:"Confirm",
+ cancel:"Cancel",
+ allKnown:"You know every word in this topic!",
+ chooseAnother:"Choose another topic",
+ saveWarn:"Progress saved on this device.",
+ noSave:"Saving unavailable here: progress will be lost on close.",
+ quit:"Quit",
+ known1:"known",
+ of:"of",
+ time:"Time",
+ target:"Target",
+ passed:"Target reached",
+ failed:"Too slow",
+ timePenalty:"+1 s per mistake",
+ retrySame:"Redo this list",
+ prodTitle:"Write the word",
+ prodSub:"Rebuild the translation to clear this word",
+ prodOk:"Correct",
+ prodNo:"Wrong",
+ clear:"Clear",
+ skipProd:"Skip",
+ mastered:"Mastered",
+ nearly:"Almost there",
+ seen:"seen",
+ times:"times",
+ avgTime:"Average time",
+ bothWays:"Alternate both directions",
+ bothWaysHelp:"The word appears sometimes in one language, sometimes the other.",
+ needStreak:"3 correct in a row, then write the word",
+ progressWord:"Word progress",
+ unlockProd:"Writing unlocked",
+ intermediate:"Intermediate",
+ expert:"Expert"
+},
+de:{
+ name:"Deutsch", flag:"🇩🇪",
+ appSub:"Wortschatz lernen",
+ uiLang:"Sprache der Oberfläche",
+ start:"Starten", back:"Zurück", next:"Weiter",
+ tagline:"Ziehe das Wort auf ✓, wenn die Übersetzung stimmt, auf ✗, wenn sie falsch ist.",
+ wordsIn:"Wort angezeigt auf", translatedTo:"Übersetzt nach",
+ swap:"Tauschen", showPhon:"Aussprache anzeigen",
+ phonWarn:"Aussprache für diese Ausgangssprache nicht verfügbar.",
+ chooseTheme:"Thema wählen", theme:"Thema", themes:"Themen",
+ chooseSet:"Serie wählen", set:"Serie", sets:"Serien",
+ mix:"Gemischt", mixSub:"Zufall aus dem ganzen Thema",
+ chooseSpeed:"Geschwindigkeit wählen", speed:"Geschwindigkeit",
+ play:"Spielen", words:"Wörter", word:"Wort",
+ correct:"RICHTIG", wrong:"FALSCH",
+ plus1:"+1", wasRight:"Das war richtig", wasWrong:"Das war falsch",
+ score:"Punkte", result:"Ergebnis",
+ good:"Richtig", missed:"Fehler", lost:"Verpasst",
+ toReview:"Zu wiederholen",
+ sameWords:"Diese Wörter erneut", newWords:"Neue Wörter",
+ changeSet:"Serie wechseln", changeTheme:"Thema wechseln",
+ perfect:"Perfekt", excellent:"Ausgezeichnet", notBad:"Nicht schlecht",
+ keepGoing:"Weiter so", tryAgain:"Nochmal üben",
+ msgPerfect:"Serie beherrscht.", msgExcellent:"Fast alles richtig.",
+ msgNotBad:"Noch etwas üben.", msgKeep:"Dranbleiben.",
+ msgTry:"Wörter durchlesen und erneut versuchen.",
+ level:"Stufe", beginner:"Anfänger",
+ slow:"Langsam", medium:"Mittel", fast:"Schnell", veryFast:"Sehr schnell", extreme:"Extrem",
+ profile:"Profil",
+ yourName:"Dein Name",
+ namePh:"Namen eingeben",
+ newProfile:"Neues Profil",
+ hello:"Hallo",
+ home:"Start",
+ progress:"Fortschritt",
+ known:"Gekonnt",
+ remaining:"Zu lernen",
+ accuracy:"Trefferquote",
+ games:"Runden",
+ allThemes:"Alle Themen",
+ iKnowThese:"Kreuze die Wörter an, die du schon kannst — sie kommen nicht wieder.",
+ nextSize:"Wörter in der nächsten Liste",
+ continueBtn:"Weiter",
+ nextRound:"Neue Liste",
+ sessionWords:"Wörter dieser Runde",
+ changeProfile:"Profil wechseln",
+ deleteProfile:"Profil löschen",
+ resetProgress:"Fortschritt zurücksetzen",
+ confirm:"Bestätigen",
+ cancel:"Abbrechen",
+ allKnown:"Du kannst alle Wörter dieses Themas!",
+ chooseAnother:"Wähle ein anderes Thema",
+ saveWarn:"Fortschritt auf diesem Gerät gespeichert.",
+ noSave:"Speichern hier nicht möglich: Fortschritt geht beim Schließen verloren.",
+ quit:"Beenden",
+ known1:"gekonnt",
+ of:"von",
+ time:"Zeit",
+ target:"Ziel",
+ passed:"Ziel erreicht",
+ failed:"Zu langsam",
+ timePenalty:"+1 s pro Fehler",
+ retrySame:"Liste wiederholen",
+ prodTitle:"Schreibe das Wort",
+ prodSub:"Setze die Übersetzung zusammen, um das Wort abzuschließen",
+ prodOk:"Richtig",
+ prodNo:"Falsch",
+ clear:"Löschen",
+ skipProd:"Überspringen",
+ mastered:"Gekonnt",
+ nearly:"Fast geschafft",
+ seen:"gesehen",
+ times:"mal",
+ avgTime:"Durchschnittszeit",
+ bothWays:"Beide Richtungen abwechseln",
+ bothWaysHelp:"Das Wort erscheint mal in der einen, mal in der anderen Sprache.",
+ needStreak:"3 richtige in Folge, dann das Wort schreiben",
+ progressWord:"Wortfortschritt",
+ unlockProd:"Schreiben freigeschaltet",
+ intermediate:"Mittelstufe",
+ expert:"Experte"
+},
+es:{
+ name:"Español", flag:"🇪🇸",
+ appSub:"Aprender vocabulario",
+ uiLang:"Idioma de la interfaz",
+ start:"Empezar", back:"Atrás", next:"Siguiente",
+ tagline:"Arrastra la palabra a ✓ si la traducción es correcta, a ✗ si es falsa.",
+ wordsIn:"Palabra mostrada en", translatedTo:"Traducida a",
+ swap:"Invertir", showPhon:"Mostrar la pronunciación",
+ phonWarn:"Pronunciación no disponible para este idioma de origen.",
+ chooseTheme:"Elegir un tema", theme:"Tema", themes:"Temas",
+ chooseSet:"Elegir una serie", set:"Serie", sets:"Series",
+ mix:"Mezcla", mixSub:"al azar de todo el tema",
+ chooseSpeed:"Elegir la velocidad", speed:"Velocidad",
+ play:"Jugar", words:"palabras", word:"palabra",
+ correct:"CORRECTO", wrong:"FALSO",
+ plus1:"+1", wasRight:"Era correcto", wasWrong:"Era falso",
+ score:"Puntos", result:"Resultado",
+ good:"Aciertos", missed:"Errores", lost:"Perdidas",
+ toReview:"Para repasar",
+ sameWords:"Repetir estas palabras", newWords:"Palabras nuevas",
+ changeSet:"Cambiar de serie", changeTheme:"Cambiar de tema",
+ perfect:"Perfecto", excellent:"Excelente", notBad:"Nada mal",
+ keepGoing:"Sigue así", tryAgain:"A repasar",
+ msgPerfect:"Serie dominada.", msgExcellent:"Casi todo correcto.",
+ msgNotBad:"Un poco más de práctica.", msgKeep:"Persevera.",
+ msgTry:"Repasa las palabras e inténtalo de nuevo.",
+ level:"Nivel", beginner:"Principiante",
+ slow:"Lento", medium:"Medio", fast:"Rápido", veryFast:"Muy rápido", extreme:"Extremo",
+ profile:"Perfil",
+ yourName:"Tu nombre",
+ namePh:"Escribe tu nombre",
+ newProfile:"Nuevo perfil",
+ hello:"Hola",
+ home:"Inicio",
+ progress:"Progreso",
+ known:"Sabidas",
+ remaining:"Por aprender",
+ accuracy:"Acierto",
+ games:"Rondas",
+ allThemes:"Todos los temas",
+ iKnowThese:"Marca las palabras que ya sabes — no volverán a salir.",
+ nextSize:"Palabras en la próxima lista",
+ continueBtn:"Continuar",
+ nextRound:"Nueva lista",
+ sessionWords:"Palabras de esta ronda",
+ changeProfile:"Cambiar de perfil",
+ deleteProfile:"Eliminar este perfil",
+ resetProgress:"Reiniciar el progreso",
+ confirm:"Confirmar",
+ cancel:"Cancelar",
+ allKnown:"¡Ya sabes todas las palabras de este tema!",
+ chooseAnother:"Elige otro tema",
+ saveWarn:"Progreso guardado en este dispositivo.",
+ noSave:"Guardado no disponible aquí: el progreso se perderá al cerrar.",
+ quit:"Salir",
+ known1:"sabidas",
+ of:"de",
+ time:"Tiempo",
+ target:"Objetivo",
+ passed:"Objetivo logrado",
+ failed:"Demasiado lento",
+ timePenalty:"+1 s por error",
+ retrySame:"Repetir esta lista",
+ prodTitle:"Escribe la palabra",
+ prodSub:"Reconstruye la traducción para superar esta palabra",
+ prodOk:"Correcto",
+ prodNo:"Incorrecto",
+ clear:"Borrar",
+ skipProd:"Saltar",
+ mastered:"Dominada",
+ nearly:"Casi",
+ seen:"vista",
+ times:"veces",
+ avgTime:"Tiempo medio",
+ bothWays:"Alternar los dos sentidos",
+ bothWaysHelp:"La palabra aparece unas veces en un idioma y otras en el otro.",
+ needStreak:"3 aciertos seguidos y luego escribir la palabra",
+ progressWord:"Progreso de la palabra",
+ unlockProd:"Escritura desbloqueada",
+ intermediate:"Intermedio",
+ expert:"Experto"
+},
+it:{
+ name:"Italiano", flag:"🇮🇹",
+ appSub:"Imparare il lessico",
+ uiLang:"Lingua dell'interfaccia",
+ start:"Inizia", back:"Indietro", next:"Avanti",
+ tagline:"Trascina la parola su ✓ se la traduzione è corretta, su ✗ se è sbagliata.",
+ wordsIn:"Parola mostrata in", translatedTo:"Tradotta in",
+ swap:"Inverti", showPhon:"Mostra la pronuncia",
+ phonWarn:"Pronuncia non disponibile per questa lingua di partenza.",
+ chooseTheme:"Scegli un tema", theme:"Tema", themes:"Temi",
+ chooseSet:"Scegli una serie", set:"Serie", sets:"Serie",
+ mix:"Misto", mixSub:"a caso da tutto il tema",
+ chooseSpeed:"Scegli la velocità", speed:"Velocità",
+ play:"Gioca", words:"parole", word:"parola",
+ correct:"CORRETTO", wrong:"SBAGLIATO",
+ plus1:"+1", wasRight:"Era corretto", wasWrong:"Era sbagliato",
+ score:"Punti", result:"Risultato",
+ good:"Giuste", missed:"Errori", lost:"Perse",
+ toReview:"Da rivedere",
+ sameWords:"Rigioca queste parole", newWords:"Parole nuove",
+ changeSet:"Cambia serie", changeTheme:"Cambia tema",
+ perfect:"Perfetto", excellent:"Eccellente", notBad:"Niente male",
+ keepGoing:"Continua così", tryAgain:"Da ripassare",
+ msgPerfect:"Serie padroneggiata.", msgExcellent:"Quasi tutto giusto.",
+ msgNotBad:"Ancora un po' di pratica.", msgKeep:"Insisti.",
+ msgTry:"Rileggi le parole e riprova.",
+ level:"Livello", beginner:"Principiante",
+ slow:"Lento", medium:"Medio", fast:"Veloce", veryFast:"Molto veloce", extreme:"Estremo",
+ profile:"Profilo",
+ yourName:"Il tuo nome",
+ namePh:"Scrivi il tuo nome",
+ newProfile:"Nuovo profilo",
+ hello:"Ciao",
+ home:"Inizio",
+ progress:"Progressi",
+ known:"Sapute",
+ remaining:"Da imparare",
+ accuracy:"Precisione",
+ games:"Turni",
+ allThemes:"Tutti i temi",
+ iKnowThese:"Spunta le parole che già conosci — non torneranno.",
+ nextSize:"Parole nella prossima lista",
+ continueBtn:"Continua",
+ nextRound:"Nuova lista",
+ sessionWords:"Parole di questo turno",
+ changeProfile:"Cambia profilo",
+ deleteProfile:"Elimina questo profilo",
+ resetProgress:"Azzera i progressi",
+ confirm:"Conferma",
+ cancel:"Annulla",
+ allKnown:"Conosci tutte le parole di questo tema!",
+ chooseAnother:"Scegli un altro tema",
+ saveWarn:"Progressi salvati su questo dispositivo.",
+ noSave:"Salvataggio non disponibile qui: i progressi andranno persi alla chiusura.",
+ quit:"Esci",
+ known1:"sapute",
+ of:"su",
+ time:"Tempo",
+ target:"Obiettivo",
+ passed:"Obiettivo raggiunto",
+ failed:"Troppo lento",
+ timePenalty:"+1 s per errore",
+ retrySame:"Rifare questa lista",
+ prodTitle:"Scrivi la parola",
+ prodSub:"Ricostruisci la traduzione per superare questa parola",
+ prodOk:"Giusto",
+ prodNo:"Sbagliato",
+ clear:"Cancella",
+ skipProd:"Salta",
+ mastered:"Padroneggiata",
+ nearly:"Quasi",
+ seen:"vista",
+ times:"volte",
+ avgTime:"Tempo medio",
+ bothWays:"Alternare i due sensi",
+ bothWaysHelp:"La parola appare a volte in una lingua, a volte nell'altra.",
+ needStreak:"3 risposte giuste di fila, poi scrivere la parola",
+ progressWord:"Progresso della parola",
+ unlockProd:"Scrittura sbloccata",
+ intermediate:"Intermedio",
+ expert:"Esperto"
+},
+ru:{
+ name:"Русский", flag:"🇷🇺",
+ appSub:"Изучение лексики",
+ uiLang:"Язык интерфейса",
+ start:"Начать", back:"Назад", next:"Далее",
+ tagline:"Перетащите слово на ✓, если перевод верный, на ✗ — если неверный.",
+ wordsIn:"Слово показано на", translatedTo:"Перевод на",
+ swap:"Поменять", showPhon:"Показывать произношение",
+ phonWarn:"Произношение недоступно для этого исходного языка.",
+ chooseTheme:"Выберите тему", theme:"Тема", themes:"Темы",
+ chooseSet:"Выберите набор", set:"Набор", sets:"Наборы",
+ mix:"Вперемешку", mixSub:"случайно по всей теме",
+ chooseSpeed:"Выберите скорость", speed:"Скорость",
+ play:"Играть", words:"слов", word:"слово",
+ correct:"ВЕРНО", wrong:"НЕВЕРНО",
+ plus1:"+1", wasRight:"Это было верно", wasWrong:"Это было неверно",
+ score:"Очки", result:"Результат",
+ good:"Верно", missed:"Ошибки", lost:"Пропущено",
+ toReview:"Повторить",
+ sameWords:"Повторить эти слова", newWords:"Новые слова",
+ changeSet:"Сменить набор", changeTheme:"Сменить тему",
+ perfect:"Отлично", excellent:"Очень хорошо", notBad:"Неплохо",
+ keepGoing:"Продолжайте", tryAgain:"Нужно повторить",
+ msgPerfect:"Набор освоен.", msgExcellent:"Почти всё верно.",
+ msgNotBad:"Ещё немного практики.", msgKeep:"Не останавливайтесь.",
+ msgTry:"Перечитайте слова и попробуйте снова.",
+ level:"Уровень", beginner:"Начальный",
+ slow:"Медленно", medium:"Средне", fast:"Быстро", veryFast:"Очень быстро", extreme:"Экстрим",
+ profile:"Профиль",
+ yourName:"Ваше имя",
+ namePh:"Введите имя",
+ newProfile:"Новый профиль",
+ hello:"Здравствуйте",
+ home:"Главная",
+ progress:"Прогресс",
+ known:"Выучено",
+ remaining:"Осталось",
+ accuracy:"Точность",
+ games:"Раундов",
+ allThemes:"Все темы",
+ iKnowThese:"Отметьте слова, которые вы уже знаете — они больше не появятся.",
+ nextSize:"Слов в следующем списке",
+ continueBtn:"Продолжить",
+ nextRound:"Новый список",
+ sessionWords:"Слова этого раунда",
+ changeProfile:"Сменить профиль",
+ deleteProfile:"Удалить профиль",
+ resetProgress:"Сбросить прогресс",
+ confirm:"Подтвердить",
+ cancel:"Отмена",
+ allKnown:"Вы знаете все слова этой темы!",
+ chooseAnother:"Выберите другую тему",
+ saveWarn:"Прогресс сохранён на этом устройстве.",
+ noSave:"Сохранение недоступно: прогресс будет потерян при закрытии.",
+ quit:"Выйти",
+ known1:"выучено",
+ of:"из",
+ time:"Время",
+ target:"Цель",
+ passed:"Цель достигнута",
+ failed:"Слишком медленно",
+ timePenalty:"+1 с за ошибку",
+ retrySame:"Повторить список",
+ prodTitle:"Напишите слово",
+ prodSub:"Соберите перевод, чтобы закрыть это слово",
+ prodOk:"Верно",
+ prodNo:"Неверно",
+ clear:"Стереть",
+ skipProd:"Пропустить",
+ mastered:"Выучено",
+ nearly:"Почти",
+ seen:"показано",
+ times:"раз",
+ avgTime:"Среднее время",
+ bothWays:"Чередовать оба направления",
+ bothWaysHelp:"Слово появляется то на одном языке, то на другом.",
+ needStreak:"3 правильных подряд, затем написать слово",
+ progressWord:"Прогресс слова",
+ unlockProd:"Письмо открыто",
+ intermediate:"Средний",
+ expert:"Продвинутый"
+},
+pt:{
+ name:"Português", flag:"🇵🇹",
+ appSub:"Aprender vocabulário",
+ uiLang:"Idioma da interface",
+ start:"Começar", back:"Voltar", next:"Seguinte",
+ tagline:"Arraste a palavra para ✓ se a tradução estiver correta, para ✗ se estiver errada.",
+ wordsIn:"Palavra mostrada em", translatedTo:"Traduzida para",
+ swap:"Inverter", showPhon:"Mostrar a pronúncia",
+ phonWarn:"Pronúncia indisponível para esta língua de origem.",
+ chooseTheme:"Escolher um tema", theme:"Tema", themes:"Temas",
+ chooseSet:"Escolher uma série", set:"Série", sets:"Séries",
+ mix:"Misturado", mixSub:"aleatório de todo o tema",
+ chooseSpeed:"Escolher a velocidade", speed:"Velocidade",
+ play:"Jogar", words:"palavras", word:"palavra",
+ correct:"CORRETO", wrong:"ERRADO",
+ plus1:"+1", wasRight:"Estava correto", wasWrong:"Estava errado",
+ score:"Pontos", result:"Resultado",
+ good:"Certas", missed:"Erros", lost:"Perdidas",
+ toReview:"A rever",
+ sameWords:"Repetir estas palavras", newWords:"Palavras novas",
+ changeSet:"Mudar de série", changeTheme:"Mudar de tema",
+ perfect:"Perfeito", excellent:"Excelente", notBad:"Nada mal",
+ keepGoing:"Continua", tryAgain:"A rever",
+ msgPerfect:"Série dominada.", msgExcellent:"Quase tudo certo.",
+ msgNotBad:"Um pouco mais de prática.", msgKeep:"Persiste.",
+ msgTry:"Relê as palavras e tenta de novo.",
+ level:"Nível", beginner:"Iniciante",
+ slow:"Lento", medium:"Médio", fast:"Rápido", veryFast:"Muito rápido", extreme:"Extremo",
+ profile:"Perfil",
+ yourName:"O teu nome",
+ namePh:"Escreve o teu nome",
+ newProfile:"Novo perfil",
+ hello:"Olá",
+ home:"Início",
+ progress:"Progresso",
+ known:"Sabidas",
+ remaining:"Por aprender",
+ accuracy:"Acerto",
+ games:"Rondas",
+ allThemes:"Todos os temas",
+ iKnowThese:"Marca as palavras que já sabes — não voltarão a aparecer.",
+ nextSize:"Palavras na próxima lista",
+ continueBtn:"Continuar",
+ nextRound:"Nova lista",
+ sessionWords:"Palavras desta ronda",
+ changeProfile:"Mudar de perfil",
+ deleteProfile:"Apagar este perfil",
+ resetProgress:"Reiniciar o progresso",
+ confirm:"Confirmar",
+ cancel:"Cancelar",
+ allKnown:"Já sabes todas as palavras deste tema!",
+ chooseAnother:"Escolhe outro tema",
+ saveWarn:"Progresso guardado neste dispositivo.",
+ noSave:"Guardar indisponível aqui: o progresso perde-se ao fechar.",
+ quit:"Sair",
+ known1:"sabidas",
+ of:"de",
+ time:"Tempo",
+ target:"Objetivo",
+ passed:"Objetivo alcançado",
+ failed:"Demasiado lento",
+ timePenalty:"+1 s por erro",
+ retrySame:"Refazer esta lista",
+ prodTitle:"Escreve a palavra",
+ prodSub:"Reconstrói a tradução para concluir esta palavra",
+ prodOk:"Certo",
+ prodNo:"Errado",
+ clear:"Apagar",
+ skipProd:"Saltar",
+ mastered:"Dominada",
+ nearly:"Quase",
+ seen:"vista",
+ times:"vezes",
+ avgTime:"Tempo médio",
+ bothWays:"Alternar os dois sentidos",
+ bothWaysHelp:"A palavra aparece ora numa língua, ora na outra.",
+ needStreak:"3 certas seguidas e depois escrever a palavra",
+ progressWord:"Progresso da palavra",
+ unlockProd:"Escrita desbloqueada",
+ intermediate:"Intermédio",
+ expert:"Avançado"
+}
+};
+
+const THEME_I18N = {
+ societe: {"fr": "Société", "en": "Society", "de": "Gesellschaft", "es": "Sociedad", "it": "Società", "ru": "Общество", "pt": "Sociedade"},
+ sentiments: {"fr": "Sentiments", "en": "Feelings", "de": "Gefühle", "es": "Sentimientos", "it": "Sentimenti", "ru": "Чувства", "pt": "Sentimentos"},
+ idees: {"fr": "Idées", "en": "Ideas", "de": "Begriffe", "es": "Ideas", "it": "Idee", "ru": "Понятия", "pt": "Ideias"},
+ animaux:    {fr:"Animaux",en:"Animals",de:"Tiere",es:"Animales",it:"Animali",ru:"Животные",pt:"Animais"},
+ nourriture: {fr:"Nourriture",en:"Food",de:"Essen",es:"Comida",it:"Cibo",ru:"Еда",pt:"Comida"},
+ famille:    {fr:"Famille",en:"Family",de:"Familie",es:"Familia",it:"Famiglia",ru:"Семья",pt:"Família"},
+ corps:      {fr:"Corps",en:"Body",de:"Körper",es:"Cuerpo",it:"Corpo",ru:"Тело",pt:"Corpo"},
+ vetements:  {fr:"Vêtements",en:"Clothing",de:"Kleidung",es:"Ropa",it:"Abbigliamento",ru:"Одежда",pt:"Roupa"},
+ maison:     {fr:"Maison",en:"House",de:"Haus",es:"Casa",it:"Casa",ru:"Дом",pt:"Casa"},
+ ecole:      {fr:"École",en:"School",de:"Schule",es:"Escuela",it:"Scuola",ru:"Школа",pt:"Escola"},
+ ville:      {fr:"Ville",en:"Town",de:"Stadt",es:"Ciudad",it:"Città",ru:"Город",pt:"Cidade"},
+ transports: {fr:"Transports",en:"Transport",de:"Verkehr",es:"Transporte",it:"Trasporti",ru:"Транспорт",pt:"Transportes"},
+ nature:     {fr:"Nature",en:"Nature",de:"Natur",es:"Naturaleza",it:"Natura",ru:"Природа",pt:"Natureza"},
+ temps:      {fr:"Temps",en:"Time",de:"Zeit",es:"Tiempo",it:"Tempo",ru:"Время",pt:"Tempo"},
+ loisirs:    {fr:"Loisirs",en:"Leisure",de:"Freizeit",es:"Ocio",it:"Tempo libero",ru:"Досуг",pt:"Lazer"},
+ medias:     {fr:"Communication",en:"Communication",de:"Kommunikation",es:"Comunicación",it:"Comunicazione",ru:"Общение",pt:"Comunicação"},
+ travail:    {fr:"Travail",en:"Work",de:"Arbeit",es:"Trabajo",it:"Lavoro",ru:"Работа",pt:"Trabalho"},
+ verbes:     {fr:"Verbes",en:"Verbs",de:"Verben",es:"Verbos",it:"Verbi",ru:"Глаголы",pt:"Verbos"},
+ adjectifs:  {fr:"Adjectifs",en:"Adjectives",de:"Adjektive",es:"Adjetivos",it:"Aggettivi",ru:"Прилагательные",pt:"Adjetivos"}
+};
+
+</script>
+<script>
+const LEVEL="beginner";
+const VOCAB={"animaux":{"icon":"🐾","sets":[[["das Pferd","das pfeːɐt","le cheval","lə ʃəval","the horse","ðə hɔːs","il cavallo","il kaˈvallo","лошадь","ˈloʂətʲ","el caballo","el kaˈβaʎo","o cavalo","u kaˈvalu"],["das Schwein","das ʃvaɪn","le cochon","lə kɔʃɔ̃","the pig","ðə pɪɡ","il maiale","il maˈjaːle","свинья","svʲɪˈnʲja","el cerdo","el ˈθeɾðo","o porco","u ˈpoɾku"],["der Adler","deːɐ ˈaːdlɐ","l'aigle","lɛɡl","the eagle","ði ˈiːɡl","l'aquila","ˈlaːkwila","орёл","ɐˈrʲol","el águila","el ˈaɣila","a águia","ɐ ˈaɡjɐ"],["der Affe","deːɐ ˈafə","le singe","lə sɛ̃ʒ","the monkey","ðə ˈmʌŋki","la scimmia","la ˈʃimmja","обезьяна","ɐbʲɪˈzʲjanə","el mono","el ˈmono","o macaco","u mɐˈkaku"],["der Bär","deːɐ bɛːɐ","l'ours","luʁ","the bear","ðə beə","l'orso","ˈlorso","медведь","mʲɪdˈvʲetʲ","el oso","el ˈoso","o urso","u ˈuɾsu"],["der Fisch","deːɐ fɪʃ","le poisson","lə pwasɔ̃","the fish","ðə fɪʃ","il pesce","il ˈpeʃʃe","рыба","ˈrɨbə","el pez","el peθ","o peixe","u ˈpejʃə"],["der Frosch","deːɐ frɔʃ","la grenouille","la ɡʁənwj","the frog","ðə frɒɡ","la rana","la ˈraːna","лягушка","lʲɪˈɡuʂkə","la rana","la ˈrana","a rã","ɐ ˈʁɐ̃"],["der Fuchs","deːɐ fʊks","le renard","lə ʁənaʁ","the fox","ðə fɒks","la volpe","la ˈvolpe","лиса","lʲɪˈsa","el zorro","el ˈθoro","a raposa","ɐ ʁɐˈpozɐ"]],[["der Hase","deːɐ ˈhaːzə","le lièvre","lə ljɛvʁ","the hare","ðə heə","la lepre","la ˈlɛːpre","заяц","ˈzajɪts","la liebre","la ˈljeβɾe","a lebre","ɐ ˈlɛbɾə"],["der Hund","deːɐ hʊnt","le chien","lə ʃjɑ̃","the dog","ðə dɒɡ","il cane","il ˈkaːne","собака","sɐˈbakə","el perro","el ˈpero","o cão","u ˈkɐ̃w"],["der Igel","deːɐ ˈiːɡəl","le hérisson","lə eʁisɔ̃","the hedgehog","ðə ˈhedʒhɒɡ","il riccio","il ˈrittʃo","ёж","joʂ","el erizo","el eˈɾiθo","o ouriço","u oˈɾisu"],["der Löwe","deːɐ ˈløːvə","le lion","lə ljɔ̃","the lion","ðə ˈlaɪən","il leone","il leˈoːne","лев","lʲef","el león","el leˈon","o leão","u liˈɐ̃w"],["der Vogel","deːɐ ˈfoːɡəl","l'oiseau","lwazo","the bird","ðə bɜːd","l'uccello","lutˈtʃɛllo","птица","ˈptitsə","el pájaro","el ˈpaxaɾo","o pássaro","u ˈpasaɾu"],["der Wolf","deːɐ vɔlf","le loup","lə lu","the wolf","ðə wʊlf","il lupo","il ˈluːpo","волк","volk","el lobo","el ˈloβo","o lobo","u ˈloβu"],["die Biene","diː ˈbiːnə","l'abeille","labɛl","the bee","ðə biː","l'ape","ˈlaːpe","пчела","ptɕɪˈla","la abeja","la aˈβexa","a abelha","ɐ ɐˈβeʎɐ"],["die Ente","diː ˈɛntə","le canard","lə kanaʁ","the duck","ðə dʌk","l'anatra","ˈlaːnatra","утка","ˈutkə","el pato","el ˈpato","o pato","u ˈpatu"]],[["die Fledermaus","diː ˈfleːdɐmaʊs","la chauve-souris","la ʃov suʁi","the bat","ðə bæt","il pipistrello","il pipiˈstrɛllo","летучая мышь","lʲɪˈtutɕɪjə mɨʂ","el murciélago","el muɾˈθjelaɣo","o morcego","u muɾˈseɣu"],["die Giraffe","diː ɡiˈrafə","la girafe","la ʒiʁaf","the giraffe","ðə dʒɪˈrɑːf","la giraffa","la dʒiˈraffa","жираф","ʐɨˈraf","la jirafa","la xiˈɾafa","a girafa","ɐ ʒiˈɾafɐ"],["die Katze","diː ˈkatsə","le chat","lə ʃa","the cat","ðə kæt","il gatto","il ˈɡatto","кошка","ˈkoʂkə","el gato","el ˈɡato","o gato","u ˈɡatu"],["die Kuh","diː kuː","la vache","la vaʃ","the cow","ðə kaʊ","la mucca","la ˈmukka","корова","kɐˈrovə","la vaca","la ˈbaka","a vaca","ɐ ˈvakɐ"],["die Maus","diː maʊs","la souris","la suʁi","the mouse","ðə maʊs","il topo","il ˈtɔːpo","мышь","mɨʂ","el ratón","el raˈton","o rato","u ˈʁatu"],["die Schlange","diː ˈʃlaŋə","le serpent","lə sɛʁpɑ̃","the snake","ðə sneɪk","il serpente","il serˈpɛnte","змея","zmʲɪˈja","la serpiente","la seɾˈpjente","a cobra","ɐ ˈkɔβɾɐ"],["die Spinne","diː ˈʃpɪnə","l'araignée","laʁɛɲe","the spider","ðə ˈspaɪdə","il ragno","il ˈraɲɲo","паук","pɐˈuk","la araña","la aˈɾaɲa","a aranha","ɐ ɐˈɾɐɲɐ"],["das Tier","das tiːɐ","l'animal","lanimal","animal","","animale","aniˈmaːle","животное","","animal","aniˈmal","animal",""]]]},"nourriture":{"icon":"🍎","sets":[[["das Brot","das broːt","le pain","lə pɛ̃","the bread","ðə bred","il pane","il ˈpaːne","хлеб","xlʲep","el pan","el pan","o pão","u ˈpɐ̃w"],["das Ei","das aɪ","l'œuf","lœyf","the egg","ði eɡ","l'uovo","ˈlwɔːvo","яйцо","jɪjˈtso","el huevo","el ˈweβo","o ovo","u ˈovu"],["das Fleisch","das flaɪʃ","la viande","la vjɑ̃d","the meat","ðə miːt","la carne","la ˈkarne","мясо","ˈmʲasə","la carne","la ˈkaɾne","a carne","ɐ ˈkaɾnə"],["das Gemüse","das ɡəˈmyːzə","les légumes","le leɡymɛ","the vegetables","ðə ˈvedʒtəblz","la verdura","la verˈduːra","овощи","ˈovəɕɕɪ","las verduras","las beɾˈðuɾas","os legumes","uʒ lɨˈɡumɨʃ"],["das Mehl","das meːl","la farine","la faʁin","the flour","ðə ˈflaʊə","la farina","la faˈriːna","мука","mʊˈka","la harina","la aˈɾina","a farinha","ɐ fɐˈɾiɲɐ"],["das Wasser","das ˈvasɐ","l'eau","lo","the water","ðə ˈwɔːtə","l'acqua","ˈlakkwa","вода","vɐˈda","el agua","el ˈaɣwa","a água","ɐ ˈaɡwɐ"],["der Apfel","deːɐ ˈapfəl","la pomme","la pɔm","the apple","ði ˈæpl","la mela","la ˈmeːla","яблоко","ˈjabləkə","la manzana","la manˈθana","a maçã","ɐ mɐˈsɐ̃"],["der Essig","deːɐ ˈɛsɪç","le vinaigre","lə vinɛɡʁ","the vinegar","ðə ˈvɪnɪɡə","l'aceto","laˈtʃeːto","уксус","ˈuksʊs","el vinagre","el biˈnaɣɾe","o vinagre","u viˈnaɣɾə"]],[["der Knoblauch","deːɐ ˈknoːplaʊx","l'ail","lɛl","the garlic","ðə ˈɡɑːlɪk","l'aglio","ˈlaʎʎo","чеснок","tɕɪsˈnok","el ajo","el ˈaxo","o alho","u ˈaʎu"],["der Kuchen","deːɐ ˈkuːxən","le gâteau","lə ɡɑto","the cake","ðə keɪk","la torta","la ˈtorta","торт","tort","el pastel","el pasˈtel","o bolo","u ˈbolu"],["der Käse","deːɐ ˈkɛːzə","le fromage","lə fʁɔmaʒ","the cheese","ðə tʃiːz","il formaggio","il forˈmaddʒo","сыр","sɨr","el queso","el ˈkeso","o queijo","u ˈkejʒu"],["der Pfeffer","deːɐ ˈpfɛfɐ","le poivre","lə pwavʁ","the pepper","ðə ˈpepə","il pepe","il ˈpeːpe","перец","ˈpʲerʲɪts","la pimienta","la piˈmjenta","a pimenta","ɐ piˈmẽtɐ"],["der Saft","deːɐ zaft","le jus","lə ʒy","the juice","ðə dʒuːs","il succo","il ˈsukko","сок","sok","el zumo","el ˈθumo","o sumo","u ˈsumu"],["der Schinken","deːɐ ˈʃɪŋkən","le jambon","lə ʒɑ̃bɔ̃","the ham","ðə hæm","il prosciutto","il proʃˈʃutto","ветчина","vʲɪtɕːɪˈna","el jamón","el xaˈmon","o presunto","u pɾɨˈzũtu"],["der Spinat","deːɐ ʃpiˈnaːt","les épinards","le epinaʁd","the spinach","ðə ˈspɪnɪtʃ","gli spinaci","ʎi spiˈnaːtʃi","шпинат","ʂpʲɪˈnat","las espinacas","las espiˈnakas","os espinafres","uz ɨʃpiˈnafɾɨʃ"],["die Banane","diː baˈnaːnə","la banane","la banan","the banana","ðə bəˈnɑːnə","la banana","la baˈnaːna","банан","bɐˈnan","el plátano","el ˈplatano","a banana","ɐ bɐˈnɐnɐ"]],[["die Butter","diː ˈbʊtɐ","le beurre","lə bœʁ","the butter","ðə ˈbʌtə","il burro","il ˈburro","масло","ˈmaslə","la mantequilla","la manteˈkiʎa","a manteiga","ɐ mɐ̃ˈtɐjɡɐ"],["die Erdbeere","diː ˈeːɐtbeːʁə","la fraise","la fʁɛz","the strawberry","ðə ˈstrɔːbəri","la fragola","la ˈfraːɡola","клубника","klʊbˈnʲikə","la fresa","la ˈfɾesa","o morango","u muˈɾɐ̃ɡu"],["die Kartoffel","diː kaʁˈtɔfəl","la pomme de terre","la pɔm də tɛʁ","the potato","ðə pəˈteɪtəʊ","la patata","la paˈtaːta","картофель","kɐrˈtofʲɪlʲ","la patata","la paˈtata","a batata","ɐ bɐˈtatɐ"],["die Milch","diː mɪlç","le lait","lə lɛ","the milk","ðə mɪlk","il latte","il ˈlatte","молоко","məlɐˈko","la leche","la ˈletʃe","o leite","u ˈlejtə"],["die Sahne","diː ˈzaːnə","la crème","la kʁɛm","the cream","ðə kriːm","la panna","la ˈpanna","сливки","ˈslʲifkʲɪ","la nata","la ˈnata","a nata","ɐ ˈnatɐ"],["die Suppe","diː ˈzʊpə","la soupe","la sup","the soup","ðə suːp","la zuppa","la ˈtsuppa","суп","sup","la sopa","la ˈsopa","a sopa","ɐ ˈsopɐ"],["die Zwiebel","diː ˈtsviːbəl","l'oignon","lwaɲɔ̃","the onion","ði ˈʌnjən","la cipolla","la tʃiˈpolla","лук","luk","la cebolla","la θeˈβoʎa","a cebola","ɐ sɨˈbolɐ"]]]},"famille":{"icon":"👪","sets":[[["das Baby","das ˈbeːbi","le bébé","lə bebe","the baby","ðə ˈbeɪbi","il neonato","il neoˈnaːto","младенец","mlɐˈdʲenʲɪts","el bebé","el beˈβe","o bebé","u bɨˈbɛ"],["das Kind","das kɪnt","l'enfant","lɑ̃fɑ̃","the child","ðə tʃaɪld","il bambino","il bamˈbiːno","ребёнок","rʲɪˈbʲonək","el niño","el ˈniɲo","a criança","ɐ kɾiˈɐ̃sɐ"],["das Patenkind","das ˈpaːtənkɪnt","le filleul","lə fijœl","the godchild","ðə ˈɡɒdtʃaɪld","il figlioccio","il fiʎˈʎɔttʃo","крестник","ˈkrʲesnʲɪk","el ahijado","el aiˈxaðo","o afilhado","u ɐfiˈʎadu"],["der Bruder","deːɐ ˈbruːdɐ","le frère","lə fʁɛʁ","the brother","ðə ˈbrʌðə","il fratello","il fraˈtɛllo","брат","brat","el hermano","el eɾˈmano","o irmão","u iɾˈmɐ̃w"],["der Cousin","deːɐ kuˈzɛ̃ː","le cousin","lə kuzɛ̃","the cousin","ðə ˈkʌzn","il cugino","il kuˈdʒiːno","двоюродный брат","dvɐˈjurədnɨj brat","el primo","el ˈpɾimo","o primo","u ˈpɾimu"],["der Enkel","deːɐ ˈɛŋkəl","le petit-fils","lə pəti fis","the grandson","ðə ˈɡrænsʌn","il nipote","il niˈpoːte","внук","vnuk","el nieto","el ˈnjeto","o neto","u ˈnetu"],["der Neffe","deːɐ ˈnɛfə","le neveu","lə nəvø","the nephew","ðə ˈnefjuː","il nipote","il niˈpoːte","племянник","plʲɪˈmʲanʲːɪk","el sobrino","el soˈβɾino","o sobrinho","u suˈbɾiɲu"],["der Onkel","deːɐ ˈɔŋkəl","l'oncle","lɔ̃kl","the uncle","ði ˈʌŋkl","lo zio","lo ˈtsiːo","дядя","ˈdʲadʲə","el tío","el ˈtio","o tio","u ˈtiu"]],[["der Opa","deːɐ ˈoːpa","le grand-père","lə ɡʁɑ̃ pɛʁ","the grandfather","ðə ˈɡrænfɑːðə","il nonno","il ˈnɔnno","дедушка","ˈdʲedʊʂkə","el abuelo","el aˈβwelo","o avô","u ɐˈvo"],["der Schwager","deːɐ ˈʃvaːɡɐ","le beau-frère","lə bo fʁɛʁ","the brother-in-law","ðə ˈbrʌðərɪnlɔː","il cognato","il koɲˈɲaːto","шурин","ˈʂurʲɪn","el cuñado","el kuˈɲaðo","o cunhado","u kuˈɲadu"],["der Vater","deːɐ ˈfaːtɐ","le père","lə pɛʁ","the father","ðə ˈfɑːðə","il padre","il ˈpaːdre","отец","ɐˈtʲets","el padre","el ˈpaðɾe","o pai","u ˈpaj"],["der Zwilling","deːɐ ˈtsvɪlɪŋ","le jumeau","lə ʒymo","the twin","ðə twɪn","il gemello","il dʒeˈmɛllo","близнец","blʲɪzˈnʲets","el gemelo","el xeˈmelo","o gémeo","u ˈʒɛmju"],["die Ehe","diː ˈeːə","le mariage","lə maʁjaʒ","the marriage","ðə ˈmærɪdʒ","il matrimonio","il matriˈmɔːnjo","брак","brak","el matrimonio","el matɾiˈmonjo","o casamento","u kɐzɐˈmẽtu"],["die Eltern","diː ˈɛltɐn","les parents","le paʁɑ̃t","the parents","ðə ˈpeərənts","i genitori","i dʒeniˈtoːri","родители","rɐˈdʲitʲɪlʲɪ","los padres","los ˈpaðɾes","os pais","uʃ ˈpajʃ"],["die Enkelin","diː ˈɛŋkəlɪn","la petite-fille","la pətit fij","the granddaughter","ðə ˈɡrændɔːtə","la nipotina","la nipoˈtiːna","внучка","ˈvnutɕkə","la nieta","la ˈnjeta","a neta","ɐ ˈnetɐ"],["die Familie","diː faˈmiːliə","la famille","la famij","the family","ðə ˈfæməli","la famiglia","la faˈmiʎʎa","семья","sʲɪˈmʲja","la familia","la faˈmilja","a família","ɐ fɐˈmiljɐ"]],[["die Mutter","diː ˈmʊtɐ","la mère","la mɛʁ","the mother","ðə ˈmʌðə","la madre","la ˈmaːdre","мать","matʲ","la madre","la ˈmaðɾe","a mãe","ɐ ˈmɐ̃j"],["die Nichte","diː ˈnɪçtə","la nièce","la njɛs","the niece","ðə niːs","la nipote","la niˈpoːte","племянница","plʲɪˈmʲanʲːɪtsə","la sobrina","la soˈβɾina","a sobrinha","ɐ suˈbɾiɲɐ"],["die Oma","diː ˈoːma","la grand-mère","la ɡʁɑ̃ mɛʁ","the grandmother","ðə ˈɡrænmʌðə","la nonna","la ˈnɔnna","бабушка","ˈbabʊʂkə","la abuela","la aˈβwela","a avó","ɐ ɐˈvɔ"],["die Schwester","diː ˈʃvɛstɐ","la sœur","la sœyʁ","the sister","ðə ˈsɪstə","la sorella","la soˈrɛlla","сестра","sʲɪsˈtra","la hermana","la eɾˈmana","a irmã","ɐ iɾˈmɐ̃"],["die Tante","diː ˈtantə","la tante","la tɑ̃t","the aunt","ði ɑːnt","la zia","la ˈtsiːa","тётя","ˈtʲɵtʲə","la tía","la ˈtia","a tia","ɐ ˈtiɐ"],["die Witwe","diː ˈvɪtvə","la veuve","la vœv","the widow","ðə ˈwɪdəʊ","la vedova","la ˈveːdova","вдова","vdɐˈva","la viuda","la ˈbjuða","a viúva","ɐ viˈuvɐ"]]]},"corps":{"icon":"🖐","sets":[[["das Auge","das ˈaʊɡə","l'œil","lœj","the eye","ði aɪ","l'occhio","ˈlɔkkjo","глаз","ɡlas","el ojo","el ˈoxo","o olho","u ˈoʎu"],["das Bein","das baɪn","la jambe","la ʒɑ̃b","the leg","ðə leɡ","la gamba","la ˈɡamba","нога","nɐˈɡa","la pierna","la ˈpjeɾna","a perna","ɐ ˈpɛɾnɐ"],["das Haar","das haːɐ","les cheveux","le ʃəvœ","the hair","ðə heə","i capelli","i kaˈpelli","волосы","ˈvoləsɨ","el pelo","el ˈpelo","o cabelo","u kɐˈbelu"],["das Herz","das hɛʁts","le cœur","lə kœyʁ","the heart","ðə hɑːt","il cuore","il ˈkwɔːre","сердце","ˈsʲertsə","el corazón","el koɾaˈθon","o coração","u kuɾɐˈsɐ̃w"],["das Knie","das kniː","le genou","lə ʒənu","the knee","ðə niː","il ginocchio","il dʒiˈnɔkkjo","колено","kɐˈlʲenə","la rodilla","la roˈðiʎa","o joelho","u ʒuˈeʎu"],["das Ohr","das oːɐ","l'oreille","lɔʁɛl","the ear","ði ɪə","l'orecchio","loˈrekkjo","ухо","ˈuxə","la oreja","la oˈɾexa","a orelha","ɐ oˈɾeʎɐ"],["der Arm","deːɐ aʁm","le bras","lə bʁa","the arm","ði ɑːm","il braccio","il ˈbrattʃo","рука","rʊˈka","el brazo","el ˈbɾaθo","o braço","u ˈbɾasu"],["der Bauch","deːɐ baʊx","le ventre","lə vɑ̃tʁ","the belly","ðə ˈbeli","la pancia","la ˈpantʃa","живот","ʐɨˈvot","la barriga","la baˈriɣa","a barriga","ɐ bɐˈʁiɡɐ"]],[["der Finger","deːɐ ˈfɪŋɐ","le doigt","lə dwaɡ","the finger","ðə ˈfɪŋɡə","il dito","il ˈdiːto","палец","ˈpalʲɪts","el dedo","el ˈdeðo","o dedo","u ˈdedu"],["der Fuß","deːɐ fuːs","le pied","lə pjɛ","the foot","ðə fʊt","il piede","il ˈpjɛːde","нога","nɐˈɡa","el pie","el pje","o pé","u pɛ"],["der Hals","deːɐ hals","le cou","lə ku","the neck","ðə nek","il collo","il ˈkɔllo","шея","ˈʂejə","el cuello","el ˈkweʎo","o pescoço","u pɨʃˈkosu"],["der Kopf","deːɐ kɔpf","la tête","la tɛt","the head","ðə hed","la testa","la ˈtɛsta","голова","ɡəlɐˈva","la cabeza","la kaˈβeθa","a cabeça","ɐ kɐˈbesɐ"],["der Mund","deːɐ mʊnt","la bouche","la buʃ","the mouth","ðə maʊθ","la bocca","la ˈbokka","рот","rot","la boca","la ˈboka","a boca","ɐ ˈbokɐ"],["der Rücken","deːɐ ˈrʏkən","le dos","lə do","the back","ðə bæk","la schiena","la ˈskjɛːna","спина","spʲɪˈna","la espalda","la esˈpalda","as costas","ɐʃ ˈkɔʃtɐʃ"],["der Zahn","deːɐ tsaːn","la dent","la dɑ̃","the tooth","ðə tuːθ","il dente","il ˈdɛnte","зуб","zup","el diente","el ˈdjente","o dente","u ˈdẽtə"],["die Hand","diː hant","la main","la mɛ̃","the hand","ðə hænd","la mano","la ˈmaːno","рука","rʊˈka","la mano","la ˈmano","a mão","ɐ ˈmɐ̃w"]],[["die Haut","diː haʊt","la peau","la po","the skin","ðə skɪn","la pelle","la ˈpɛlle","кожа","ˈkoʐə","la piel","la pjel","a pele","ɐ ˈpɛlə"],["die Nase","diː ˈnaːzə","le nez","lə nɛ","the nose","ðə nəʊz","il naso","il ˈnaːzo","нос","nos","la nariz","la naˈɾiθ","o nariz","u nɐˈɾiʃ"],["die Schulter","diː ˈʃʊltɐ","l'épaule","lepol","the shoulder","ðə ˈʃəʊldə","la spalla","la ˈspalla","плечо","plʲɪˈtɕo","el hombro","el ˈombɾo","o ombro","u ˈõbɾu"],["die Stirn","diː ʃtɪʁn","le front","lə fʁɔ̃","the forehead","ðə ˈfɔːhed","la fronte","la ˈfronte","лоб","lop","la frente","la ˈfɾente","a testa","ɐ ˈtɛʃtɐ"],["die Zunge","diː ˈtsʊŋə","la langue","la lɑ̃ɡy","the tongue","ðə tʌŋ","la lingua","la ˈliŋɡwa","язык","jɪˈzɨk","la lengua","la ˈleŋɡwa","a língua","ɐ ˈlĩɡwɐ"]]]},"vetements":{"icon":"👕","sets":[[["das Hemd","das hɛmt","la chemise","la ʃəmiz","the shirt","ðə ʃɜːt","la camicia","la kaˈmiːtʃa","рубашка","rʊˈbaʂkə","la camisa","la kaˈmisa","a camisa","ɐ kɐˈmizɐ"],["das Kleid","das klaɪt","la robe","la ʁɔb","the dress","ðə dres","il vestito","il vesˈtiːto","платье","ˈplatʲjə","el vestido","el besˈtiðo","o vestido","u vɨʃˈtidu"],["das T-Shirt","das ˈtiːʃœʁt","le t-shirt","lə  siʁ","the t-shirt","ðə ˈtiːʃɜːt","la maglietta","la maʎˈʎetta","футболка","fʊdˈbolkə","la camiseta","la kamiˈseta","a t-shirt","ɐ tiˈʃɜɾt"],["der Gürtel","deːɐ ˈɡʏʁtəl","la ceinture","la sɛ̃tyʁ","the belt","ðə belt","la cintura","la tʃinˈtuːra","ремень","rʲɪˈmʲenʲ","el cinturón","el θintuˈɾon","o cinto","u ˈsĩtu"],["der Hut","deːɐ huːt","le chapeau","lə ʃapo","the hat","ðə hæt","il cappello","il kapˈpɛllo","шляпа","ˈʂlʲapə","el sombrero","el somˈbɾeɾo","o chapéu","u ʃɐˈpɛw"],["der Mantel","deːɐ ˈmantəl","le manteau","lə mɑ̃to","the coat","ðə kəʊt","il cappotto","il kapˈpɔtto","пальто","pɐlʲˈto","el abrigo","el aˈβɾiɣo","o casacão","u kɐzɐˈkɐ̃w"],["der Ring","deːɐ rɪŋ","la bague","la baɡy","the ring","ðə rɪŋ","l'anello","laˈnɛllo","кольцо","kɐlʲˈtso","el anillo","el aˈniʎo","o anel","u ɐˈnɛl"],["der Rock","deːɐ rɔk","la jupe","la ʒyp","the skirt","ðə skɜːt","la gonna","la ˈɡonna","юбка","ˈjupkə","la falda","la ˈfalda","a saia","ɐ ˈsajɐ"]],[["der Schal","deːɐ ʃaːl","l'écharpe","leʃaʁp","the scarf","ðə skɑːf","la sciarpa","la ˈʃarpa","шарф","ʂarf","la bufanda","la buˈfanda","o cachecol","u kaʃɨˈkɔl"],["der Schmuck","deːɐ ʃmʊk","les bijoux","le biʒu","the jewellery","ðə ˈdʒuːəlri","i gioielli","i dʒoˈjɛlli","украшения","ʊkrɐˈʂenʲɪjə","las joyas","las ˈxoʝas","as joias","ɐʒ ˈʒɔjɐʃ"],["der Schuh","deːɐ ʃuː","la chaussure","la ʃosyʁ","the shoe","ðə ʃuː","la scarpa","la ˈskarpa","ботинок","bɐˈtʲinək","el zapato","el θaˈpato","o sapato","u sɐˈpatu"],["der Stiefel","deːɐ ˈʃtiːfəl","la botte","la bɔt","the boot","ðə buːt","lo stivale","lo stiˈvaːle","сапог","sɐˈpok","la bota","la ˈbota","a bota","ɐ ˈbɔtɐ"],["die Brille","diː ˈbrɪlə","les lunettes","le lynɛtɛ","the glasses","ðə ˈɡlɑːsɪz","gli occhiali","ʎi okˈkjaːli","очки","ɐtɕˈkʲi","las gafas","las ˈɡafas","os óculos","uz ˈɔkuluʃ"],["die Frisur","diː friˈzuːɐ","la coiffure","la kwafyʁ","the hairstyle","ðə ˈheəstaɪl","la pettinatura","la pettinaˈtuːra","причёска","prʲɪˈtɕoskə","el peinado","el pejˈnaðo","o penteado","u pẽtiˈadu"],["die Hose","diː ˈhoːzə","le pantalon","lə pɑ̃talɔ̃","the trousers","ðə ˈtraʊzəz","i pantaloni","i pantaˈloːni","брюки","ˈbrʲukʲɪ","los pantalones","los pantaˈlones","as calças","ɐʃ ˈkalsɐʃ"],["die Jacke","diː ˈjakə","la veste","la vɛst","the jacket","ðə ˈdʒækɪt","la giacca","la ˈdʒakka","куртка","ˈkurtkə","la chaqueta","la tʃaˈketa","o casaco","u kɐˈzaku"]],[["die Jeans","diː dʒiːns","le jean","lə ʒəɑ̃","the jeans","ðə dʒiːnz","i jeans","i ˈdʒins","джинсы","ˈdʐɨnsɨ","los vaqueros","los baˈkeɾos","as jeans","ɐʒ ˈʒinʃ"],["die Mütze","diː ˈmʏtsə","le bonnet","lə bɔnɛ","the cap","ðə kæp","il berretto","il berˈretto","шапка","ˈʂapkə","el gorro","el ˈɡoro","o gorro","u ˈɡoʁu"],["die Socke","diː ˈzɔkə","la chaussette","la ʃosɛt","the sock","ðə sɒk","il calzino","il kalˈtsiːno","носок","nɐˈsok","el calcetín","el kalθeˈtin","a meia","ɐ ˈmɐjɐ"],["die Tasche","diː ˈtaʃə","le sac","lə sak","the bag","ðə bæɡ","la borsa","la ˈborsa","сумка","ˈsumkə","el bolso","el ˈbolso","a bolsa","ɐ ˈbolsɐ"]]]},"maison":{"icon":"🏠","sets":[[["das Bad","das baːt","la salle de bain","la sal də bɛ̃","the bathroom","ðə ˈbɑːθruːm","il bagno","il ˈbaɲɲo","ванная","ˈvanːəjə","el baño","el ˈbaɲo","a casa de banho","ɐ ˈkazɐ də ˈbɐɲu"],["das Bett","das bɛt","le lit","lə li","the bed","ðə bed","il letto","il ˈlɛtto","кровать","krɐˈvatʲ","la cama","la ˈkama","a cama","ɐ ˈkɐmɐ"],["das Dach","das dax","le toit","lə twa","the roof","ðə ruːf","il tetto","il ˈtɛtto","крыша","ˈkrɨʂə","el tejado","el teˈxaðo","o telhado","u tɨˈʎadu"],["das Fenster","das ˈfɛnstɐ","la fenêtre","la fənɛtʁ","the window","ðə ˈwɪndəʊ","la finestra","la fiˈnɛstra","окно","ɐkˈno","la ventana","la benˈtana","a janela","ɐ ʒɐˈnɛlɐ"],["das Haus","das haʊs","la maison","la mɛzɔ̃","the house","ðə haʊs","la casa","la ˈkaːza","дом","dom","la casa","la ˈkasa","a casa","ɐ ˈkazɐ"],["das Wohnzimmer","das ˈvoːntsɪmɐ","le salon","lə salɔ̃","the living room","ðə ˈlɪvɪŋ ruːm","il soggiorno","il sodˈdʒorno","гостиная","ɡɐsˈtʲinəjə","la sala de estar","la ˈsala ðe esˈtaɾ","a sala de estar","ɐ ˈsalɐ də ɨʃˈtaɾ"],["das Zimmer","das ˈtsɪmɐ","la chambre","la ʃɑ̃bʁ","the room","ðə ruːm","la camera","la ˈkaːmera","комната","ˈkomnətə","la habitación","la aβitaˈθjon","o quarto","u ˈkwaɾtu"],["der Balkon","deːɐ balˈkɔŋ","le balcon","lə balkɔ̃","the balcony","ðə ˈbælkəni","il balcone","il balˈkoːne","балкон","bɐlˈkon","el balcón","el balˈkon","a varanda","ɐ vɐˈɾɐ̃dɐ"]],[["der Dachboden","deːɐ ˈdaxboːdən","le grenier","lə ɡʁənjɛʁ","the attic","ði ˈætɪk","la soffitta","la sofˈfitta","чердак","tɕɪrˈdak","el desván","el desˈβan","o sótão","u ˈsɔtɐ̃w"],["der Garten","deːɐ ˈɡaʁtən","le jardin","lə ʒaʁdɛ̃","the garden","ðə ˈɡɑːdn","il giardino","il dʒarˈdiːno","сад","sat","el jardín","el xaɾˈðin","o jardim","u ʒɐɾˈdĩ"],["der Keller","deːɐ ˈkɛlɐ","la cave","la kav","the cellar","ðə ˈselə","la cantina","la kanˈtiːna","подвал","pɐdˈval","el sótano","el ˈsotano","a cave","ɐ ˈkavə"],["der Kühlschrank","deːɐ ˈkyːlʃraŋk","le réfrigérateur","lə ʁefʁiɡeʁatœʁ","the fridge","ðə frɪdʒ","il frigorifero","il friɡoˈriːfero","холодильник","xəlɐˈdʲilʲnʲɪk","la nevera","la neˈβeɾa","o frigorífico","u fɾiɡuˈɾifiku"],["der Schrank","deːɐ ʃraŋk","l'armoire","laʁmwaʁ","the wardrobe","ðə ˈwɔːdrəʊb","l'armadio","larˈmaːdjo","шкаф","ʂkaf","el armario","el aɾˈmaɾjo","o armário","u ɐɾˈmaɾju"],["der Spiegel","deːɐ ˈʃpiːɡəl","le miroir","lə miʁwaʁ","the mirror","ðə ˈmɪrə","lo specchio","lo ˈspekkjo","зеркало","ˈzʲerkələ","el espejo","el esˈpexo","o espelho","u ɨʃˈpeʎu"],["der Stuhl","deːɐ ʃtuːl","la chaise","la ʃɛz","the chair","ðə tʃeə","la sedia","la ˈsɛːdja","стул","stul","la silla","la ˈsiʎa","a cadeira","ɐ kɐˈdɐjɾɐ"],["der Teppich","deːɐ ˈtɛpɪç","le tapis","lə tapi","the carpet","ðə ˈkɑːpɪt","il tappeto","il tapˈpeːto","ковёр","kɐˈvʲor","la alfombra","la alˈfombɾa","o tapete","u tɐˈpetə"]],[["der Tisch","deːɐ tɪʃ","la table","la tabl","the table","ðə ˈteɪbl","il tavolo","il ˈtaːvolo","стол","stol","la mesa","la ˈmesa","a mesa","ɐ ˈmezɐ"],["die Garage","diː ɡaˈraːʒə","le garage","lə ɡaʁaʒ","the garage","ðə ˈɡærɑːʒ","il garage","il ɡaˈraʒ","гараж","ɡɐˈraʂ","el garaje","el ɡaˈɾaxe","a garagem","ɐ ɡɐˈɾaʒɐ̃j"],["die Küche","diː ˈkʏçə","la cuisine","la kɥizin","the kitchen","ðə ˈkɪtʃɪn","la cucina","la kuˈtʃiːna","кухня","ˈkuxnʲə","la cocina","la koˈθina","a cozinha","ɐ kuˈziɲɐ"],["die Lampe","diː ˈlampə","la lampe","la lɑ̃p","the lamp","ðə læmp","la lampada","la ˈlampada","лампа","ˈlampə","la lámpara","la ˈlampaɾa","a lâmpada","ɐ ˈlɐ̃pɐdɐ"],["die Treppe","diː ˈtrɛpə","l'escalier","lɛskaljɛʁ","the stairs","ðə steəz","la scala","la ˈskaːla","лестница","ˈlʲesnʲɪtsə","la escalera","la eskaˈleɾa","a escada","ɐ ɨʃˈkadɐ"],["die Tür","diː tyːɐ","la porte","la pɔʁt","the door","ðə dɔː","la porta","la ˈpɔrta","дверь","dvʲerʲ","la puerta","la ˈpweɾta","a porta","ɐ ˈpɔɾtɐ"],["die Waschküche","diː ˈvaʃkʏçə","la buanderie","la byɑ̃dəʁi","the laundry room","ðə ˈlɔːndri ruːm","la lavanderia","la lavandeˈriːa","прачечная","ˈpratɕɪʂnəjə","la lavandería","la laβandeˈɾia","a lavandaria","ɐ lɐvɐ̃dɐˈɾiɐ"]]]},"ecole":{"icon":"🎓","sets":[[["das Abitur","das abiˈtuːɐ","le baccalauréat","lə bakaloʁea","the school-leaving exam","ðə skuːl ˈliːvɪŋ ɪɡˈzæm","la maturità","la maturiˈta","аттестат","ətʲɪsˈtat","el bachillerato","el batʃiʎeˈɾato","o bacharelato","u bɐʃɐɾɨˈlatu"],["das Buch","das buːx","le livre","lə livʁ","the book","ðə bʊk","il libro","il ˈliːbro","книга","ˈknʲiɡə","el libro","el ˈliβɾo","o livro","u ˈlivɾu"],["das Fach","das fax","la matière","la matjɛʁ","the subject","ðə ˈsʌbdʒɪkt","la materia","la maˈtɛːrja","предмет","prʲɪdˈmʲet","la asignatura","la asiɣnaˈtuɾa","a disciplina","ɐ diʃsiˈplinɐ"],["das Heft","das hɛft","le cahier","lə kajɛʁ","the notebook","ðə ˈnəʊtbʊk","il quaderno","il kwaˈdɛrno","тетрадь","tʲɪˈtratʲ","el cuaderno","el kwaˈðeɾno","o caderno","u kɐˈdɛɾnu"],["das Lineal","das lineˈaːl","la règle","la ʁɛɡl","the ruler","ðə ˈruːlə","il righello","il riˈɡɛllo","линейка","lʲɪˈnʲejkə","la regla","la ˈreɣla","a régua","ɐ ˈʁɛɡwɐ"],["das Wörterbuch","das ˈvœʁtɐbuːx","le dictionnaire","lə diktjɔnɛʁ","the dictionary","ðə ˈdɪkʃənri","il dizionario","il dittsjoˈnaːrjo","словарь","slɐˈvarʲ","el diccionario","el dikθjoˈnaɾjo","o dicionário","u disjuˈnaɾju"],["das Zeugnis","das ˈtsɔɪknɪs","le bulletin","lə bylətɛ̃","the report card","ðə rɪˈpɔːt kɑːd","la pagella","la paˈdʒɛlla","табель","ˈtabʲɪlʲ","el boletín","el boleˈtin","o boletim","u bulɨˈtĩ"],["der Bleistift","deːɐ ˈblaɪʃtɪft","le crayon","lə kʁajɔ̃","the pencil","ðə ˈpensl","la matita","la maˈtiːta","карандаш","kərɐnˈdaʂ","el lápiz","el ˈlapiθ","o lápis","u ˈlapiʃ"]],[["der Direktor","deːɐ diˈrɛktoːɐ","le directeur","lə diʁɛktœʁ","the principal","ðə ˈprɪnsəpl","il direttore","il diretˈtoːre","директор","dʲɪˈrʲektər","el director","el diɾekˈtoɾ","o diretor","u diɾɨˈtoɾ"],["der Lehrer","deːɐ ˈleːʁɐ","le professeur","lə pʁɔfɛsœʁ","the teacher","ðə ˈtiːtʃə","l'insegnante","linseɲˈɲante","учитель","ʊˈtɕitʲɪlʲ","el profesor","el pɾofeˈsoɾ","o professor","u pɾufɨˈsoɾ"],["der Rucksack","deːɐ ˈrʊkzak","le sac à dos","lə sak a do","the backpack","ðə ˈbækpæk","lo zaino","lo ˈdzaino","рюкзак","rʲʊɡˈzak","la mochila","la moˈtʃila","a mochila","ɐ muˈʃilɐ"],["der Schüler","deːɐ ˈʃyːlɐ","l'élève","lelɛv","the student","ðə ˈstjuːdnt","l'alunno","laˈlunno","ученик","ʊtɕɪˈnʲik","el alumno","el aˈlumno","o aluno","u ɐˈlunu"],["der Stift","deːɐ ʃtɪft","le stylo","lə stilo","the pen","ðə pen","la penna","la ˈpenna","ручка","ˈrutɕkə","el bolígrafo","el boˈliɣɾafo","a caneta","ɐ kɐˈnetɐ"],["die Bibliothek","diː bibliˈoteːk","la bibliothèque","la bibljɔtɛk","the library","ðə ˈlaɪbrəri","la biblioteca","la biblioˈtɛːka","библиотека","bʲɪblʲɪɐˈtʲekə","la biblioteca","la βiβljoˈteka","a biblioteca","ɐ bibliuˈtɛkɐ"],["die Hausaufgabe","diː ˈhaʊsaʊfɡaːbə","le devoir","lə dəvwaʁ","the homework","ðə ˈhəʊmwɜːk","il compito","il ˈkompito","домашнее задание","dɐˈmaʂnʲɪjə zɐˈdanʲɪjə","la tarea","la taˈɾea","o trabalho de casa","u tɾɐˈbaʎu də ˈkazɐ"],["die Klasse","diː ˈklasə","la classe","la klas","the class","ðə klɑːs","la classe","la ˈklasse","класс","klas","la clase","la ˈklase","a turma","ɐ ˈtuɾmɐ"]],[["die Note","diː ˈnoːtə","la note","la nɔt","the grade","ðə ɡreɪd","il voto","il ˈvɔːto","оценка","ɐˈtsenkə","la nota","la ˈnota","a nota","ɐ ˈnɔtɐ"],["die Pause","diː ˈpaʊzə","la récréation","la ʁekʁeatjɔ̃","the break","ðə breɪk","la ricreazione","la rikreatˈtsjoːne","перемена","pʲɪrʲɪˈmʲenə","el recreo","el reˈkɾeo","o recreio","u ʁɨˈkɾɐju"],["die Prüfung","diː ˈpryːfʊŋ","l'examen","ləksamɑ̃","the exam","ði ɪɡˈzæm","l'esame","leˈzaːme","экзамен","ɛɡˈzamʲɪn","el examen","el ekˈsamen","o exame","u iˈzɐmə"],["die Schere","diː ˈʃeːʁə","les ciseaux","le sizo","the scissors","ðə ˈsɪzəz","le forbici","le ˈforbitʃi","ножницы","ˈnoʐnʲɪtsɨ","las tijeras","las tiˈxeɾas","a tesoura","ɐ tɨˈzoɾɐ"],["die Schule","diː ˈʃuːlə","l'école","lekɔl","the school","ðə skuːl","la scuola","la ˈskwɔːla","школа","ˈʂkolə","la escuela","la esˈkwela","a escola","ɐ ɨʃˈkɔlɐ"],["die Tafel","diː ˈtaːfəl","le tableau","lə tablo","the blackboard","ðə ˈblækbɔːd","la lavagna","la laˈvaɲɲa","доска","dɐsˈka","la pizarra","la piˈθara","o quadro","u ˈkwadɾu"],["die Turnhalle","diː ˈtʊʁnhalə","le gymnase","lə ʒimnaz","the gymnasium","ðə dʒɪmˈneɪzɪəm","la palestra","la paˈlɛstra","спортзал","sportˈzal","el gimnasio","el ximˈnasjo","o ginásio","u ʒiˈnazju"],["die Übung","diː ˈyːbʊŋ","l'exercice","ləksɛʁsis","the exercise","ði ˈeksəsaɪz","l'esercizio","lezerˈtʃittsjo","упражнение","ʊprɐʐˈnʲenʲɪjə","el ejercicio","el exeɾˈθiθjo","o exercício","u izɨɾˈsisju"]]]},"ville":{"icon":"🏙","sets":[[["das Dorf","das dɔʁf","le village","lə vijaʒ","the village","ðə ˈvɪlɪdʒ","il villaggio","il vilˈladdʒo","деревня","dʲɪˈrʲevnʲə","el pueblo","el ˈpweβlo","a aldeia","ɐ alˈdɐjɐ"],["das Hotel","das hoˈtɛl","l'hôtel","lotɛl","the hotel","ðə həʊˈtel","l'albergo","lalˈbɛrɡo","гостиница","ɡɐˈsʲtʲinʲɪtsə","el hotel","el oˈtel","o hotel","u oˈtɛl"],["das Kino","das ˈkiːno","le cinéma","lə sinema","the cinema","ðə ˈsɪnəmə","il cinema","il ˈtʃiːnema","кино","kʲɪˈno","el cine","el ˈθine","o cinema","u siˈnemɐ"],["das Krankenhaus","das ˈkraŋkənhaʊs","l'hôpital","lopital","the hospital","ðə ˈhɒspɪtl","l'ospedale","lospeˈdaːle","больница","bɐlʲˈnʲitsə","el hospital","el ospiˈtal","o hospital","u oʃpiˈtal"],["das Museum","das muˈzeːʊm","le musée","lə myze","the museum","ðə mjuːˈziːəm","il museo","il muˈzɛːo","музей","mʊˈzʲej","el museo","el muˈseo","o museu","u muˈzew"],["das Rathaus","das ˈraːthaʊs","la mairie","la mɛʁi","the town hall","ðə taʊn hɔːl","il municipio","il muniˈtʃiːpjo","ратуша","ˈratʊʂə","el ayuntamiento","el aʝuntaˈmjento","a câmara municipal","ɐ ˈkɐmɐɾɐ munisiˈpal"],["das Restaurant","das rɛstoˈrɑ̃ː","le restaurant","lə ʁɛstoʁɑ̃","the restaurant","ðə ˈrestrɒnt","il ristorante","il ristoˈrante","ресторан","rʲɪstɐˈran","el restaurante","el restauˈɾante","o restaurante","u ʁɨʃtawˈɾɐ̃tə"],["das Schloss","das ʃlɔs","le château","lə ʃɑto","the castle","ðə ˈkɑːsl","il castello","il kasˈtɛllo","замок","ˈzamək","el castillo","el kasˈtiʎo","o castelo","u kɐʃˈtɛlu"]],[["das Schwimmbad","das ˈʃvɪmbaːt","la piscine","la pissin","the swimming pool","ðə ˈswɪmɪŋ puːl","la piscina","la piʃˈʃiːna","бассейн","bɐˈsʲejn","la piscina","la pisˈθina","a piscina","ɐ piʃˈsinɐ"],["der Laden","deːɐ ˈlaːdən","le magasin","lə maɡazɛ̃","the shop","ðə ʃɒp","il negozio","il neˈɡɔttsjo","магазин","məɡɐˈzʲin","la tienda","la ˈtjenda","a loja","ɐ ˈlɔʒɐ"],["der Markt","deːɐ maʁkt","le marché","lə maʁʃe","the market","ðə ˈmɑːkɪt","il mercato","il merˈkaːto","рынок","ˈrɨnək","el mercado","el meɾˈkaðo","o mercado","u mɨɾˈkadu"],["der Park","deːɐ paʁk","le parc","lə paʁk","the park","ðə pɑːk","il parco","il ˈparko","парк","park","el parque","el ˈpaɾke","o parque","u ˈpaɾkə"],["der Platz","deːɐ plats","la place","la plas","the square","ðə skweə","la piazza","la ˈpjattsa","площадь","ˈploɕɕətʲ","la plaza","la ˈplaθa","a praça","ɐ ˈpɾasɐ"],["der Turm","deːɐ tʊʁm","la tour","la tuʁ","the tower","ðə ˈtaʊə","la torre","la ˈtorre","башня","ˈbaʂnʲə","la torre","la ˈtore","a torre","ɐ ˈtoʁə"],["die Altstadt","diː ˈaltʃtat","la vieille ville","la vjɛl vij","the old town","ði əʊld taʊn","il centro storico","il ˈtʃɛntro ˈstɔːriko","старый город","ˈstarɨj ˈɡorət","el casco antiguo","el ˈkasko anˈtiɣwo","o centro histórico","u ˈsẽtɾu iʃˈtɔɾiku"],["die Apotheke","diː apoˈteːkə","la pharmacie","la faʁmasi","the pharmacy","ðə ˈfɑːməsi","la farmacia","la farmaˈtʃiːa","аптека","ɐpˈtʲekə","la farmacia","la faɾˈmaθja","a farmácia","ɐ fɐɾˈmasjɐ"]],[["die Bank","diː baŋk","la banque","la bɑ̃k","the bank","ðə bæŋk","la banca","la ˈbaŋka","банк","bank","el banco","el ˈbaŋko","o banco","u ˈbɐ̃ku"],["die Baustelle","diː ˈbaʊʃtɛlə","le chantier","lə ʃɑ̃tjɛʁ","the construction site","ðə kənˈstrʌkʃn saɪt","il cantiere","il kanˈtjɛːre","стройка","ˈstrojkə","la obra","la ˈoβɾa","a obra","ɐ ˈɔbɾɐ"],["die Kirche","diː ˈkɪʁçə","l'église","leɡliz","the church","ðə tʃɜːtʃ","la chiesa","la ˈkjɛːza","церковь","ˈtsɛrkəfʲ","la iglesia","la iˈɣlesja","a igreja","ɐ iˈɡɾɐjɐ"],["die Post","diː pɔst","la poste","la pɔst","the post office","ðə ˈpəʊst ˈɒfɪs","la posta","la ˈpɔsta","почта","ˈpotɕtə","el correo","el koˈreo","o correio","u kuˈʁɐju"],["die Stadt","diː ʃtat","la ville","la vij","the city","ðə ˈsɪti","la città","la tʃitˈta","город","ˈɡorət","la ciudad","la θjuˈðað","a cidade","ɐ siˈdadə"],["das Denkmal","das dənkˈmal","le monument","lə mɔnymɑ̃","monument","","monumento","monuˈmɛnto","памятник","","monumento","monuˈmento","monumento",""]]]},"transports":{"icon":"🚆","sets":[[["das Auto","das ˈaʊto","la voiture","la vwatyʁ","the car","ðə kɑː","la macchina","la ˈmakkina","машина","mɐˈʂɨnə","el coche","el ˈkotʃe","o carro","u ˈkaʁu"],["das Fahrrad","das ˈfaːɐraːt","le vélo","lə velo","the bicycle","ðə ˈbaɪsɪkl","la bicicletta","la bitʃiˈkletta","велосипед","vʲɪləsʲɪˈpʲet","la bicicleta","la biθiˈkleta","a bicicleta","ɐ bisiˈklɛtɐ"],["das Flugzeug","das ˈfluːktsɔɪk","l'avion","lavjɔ̃","the airplane","ði ˈeəpleɪn","l'aereo","laˈɛːreo","самолёт","səmɐˈlʲot","el avión","el aˈβjon","o avião","u ɐviˈɐ̃w"],["das Motorrad","das ˈmoːtoːɐraːt","la moto","la mɔto","the motorcycle","ðə ˈməʊtəsaɪkl","la moto","la ˈmɔːto","мотоцикл","mətɐˈtsɨkl","la moto","la ˈmoto","a mota","ɐ ˈmɔtɐ"],["das Schiff","das ʃɪf","le bateau","lə bato","the ship","ðə ʃɪp","la nave","la ˈnaːve","корабль","kɐˈrablʲ","el barco","el ˈbaɾko","o navio","u nɐˈviu"],["das Taxi","das ˈtaksi","le taxi","lə taksi","the taxi","ðə ˈtæksi","il taxi","il ˈtaksi","такси","tɐkˈsʲi","el taxi","el ˈtaksi","o táxi","u ˈtaksi"],["der Bahnhof","deːɐ ˈbaːnhoːf","la gare","la ɡaʁ","the station","ðə ˈsteɪʃn","la stazione","la statˈtsjoːne","вокзал","vɐɡˈzal","la estación","la estaˈθjon","a estação","ɐ ɨʃtɐˈsɐ̃w"],["der Bus","deːɐ bʊs","le bus","lə by","the bus","ðə bʌs","l'autobus","ˈlautobus","автобус","ɐfˈtobʊs","el autobús","el autoˈβus","o autocarro","u awtoˈkaʁu"]],[["der Flughafen","deːɐ ˈfluːkhaːfən","l'aéroport","laeʁɔpɔʁ","the airport","ði ˈeəpɔːt","l'aeroporto","laeroˈpɔrto","аэропорт","əɪrɐˈport","el aeropuerto","el aeɾoˈpweɾto","o aeroporto","u ɐiɾuˈpoɾtu"],["der Lastwagen","deːɐ ˈlastvaːɡən","le camion","lə kamjɔ̃","the truck","ðə trʌk","il camion","il ˈkamjon","грузовик","ɡrʊzɐˈvʲik","el camión","el kaˈmjon","o camião","u kɐmiˈɐ̃w"],["der Stau","deːɐ ʃtaʊ","l'embouteillage","lɑ̃butɛlaʒ","the traffic jam","ðə ˈtræfɪk dʒæm","l'ingorgo","linˈɡorɡo","пробка","ˈproPkə","el atasco","el aˈtasko","o engarrafamento","u ẽɡɐʁɐfɐˈmẽtu"],["der Weg","deːɐ veːk","le chemin","lə ʃəmɛ̃","the way","ðə weɪ","la via","la ˈviːa","путь","putʲ","el camino","el kaˈmino","o caminho","u kɐˈmiɲu"],["der Zug","deːɐ tsuːk","le train","lə tʁɛ̃","the train","ðə treɪn","il treno","il ˈtrɛːno","поезд","ˈpojɪst","el tren","el tɾen","o comboio","u kõˈboju"],["die Ampel","diː ˈampəl","le feu","lə fø","the traffic light","ðə ˈtræfɪk laɪt","il semaforo","il seˈmaːforo","светофор","svʲɪtɐˈfor","el semáforo","el seˈmafoɾo","o semáforo","u sɨˈmafuɾu"],["die Autobahn","diː ˈaʊtobaːn","l'autoroute","lotɔʁut","the motorway","ðə ˈməʊtəweɪ","l'autostrada","lautoˈstraːda","автомагистраль","əftəməɡʲɪˈstralʲ","la autopista","la autoˈpista","a autoestrada","ɐ awtuɨʃˈtɾadɐ"],["die Brücke","diː ˈbrʏkə","le pont","lə pɔ̃","the bridge","ðə brɪdʒ","il ponte","il ˈponte","мост","most","el puente","el ˈpwente","a ponte","ɐ ˈpõtə"]],[["die Fahrkarte","diː ˈfaːɐkaʁtə","le billet","lə bijɛ","the ticket","ðə ˈtɪkɪt","il biglietto","il biʎˈʎetto","билет","bʲɪˈlʲet","el billete","el biˈʎete","o bilhete","u biˈʎetə"],["die Fähre","diː ˈfɛːʁə","le ferry","lə fɛʁi","the ferry","ðə ˈferi","il traghetto","il traˈɡetto","паром","pɐˈrom","el ferry","el ˈferi","o ferry","u ˈfɛʁi"],["die Kreuzung","diː ˈkrɔɪtsʊŋ","le carrefour","lə kaʁəfuʁ","the crossroads","ðə ˈkrɒsrəʊdz","l'incrocio","linˈkroːtʃo","перекрёсток","pʲɪrʲɪˈkrʲostək","el cruce","el ˈkɾuθe","o cruzamento","u kɾuzɐˈmẽtu"],["die Reise","diː ˈraɪzə","le voyage","lə vojaʒ","the journey","ðə ˈdʒɜːni","il viaggio","il ˈvjaddʒo","путешествие","pʊtʲɪˈʂestvʲɪjə","el viaje","el ˈbjaxe","a viagem","ɐ viˈaʒɐ̃j"],["die Seilbahn","diː ˈzaɪlbaːn","le téléphérique","lə telefeʁik","the cable car","ðə ˈkeɪbl kɑː","la funivia","la funiˈviːa","канатная дорога","kɐˈnatnəjə dɐˈroɡə","el teleférico","el teleˈfeɾiko","o teleférico","u tɨlɨˈfɛɾiku"],["die Straße","diː ˈʃtraːsə","la rue","la ʁy","the street","ðə striːt","la strada","la ˈstraːda","улица","ˈulʲɪtsə","la calle","la ˈkaʎe","a rua","ɐ ˈʁuɐ"],["die Straßenbahn","diː ˈʃtraːsənbaːn","le tramway","lə tʁɑ̃wai","the tram","ðə træm","il tram","il ˈtram","трамвай","trɐmˈvaj","el tranvía","el tɾamˈbia","o elétrico","u iˈlɛtɾiku"],["die U-Bahn","diː ˈuːbaːn","le métro","lə metʁo","the subway","ðə ˈsʌbweɪ","la metropolitana","la metropoliˈtaːna","метро","mʲɪˈtro","el metro","el ˈmetɾo","o metro","u ˈmɛtɾu"]]]},"nature":{"icon":"🌿","sets":[[["das Feld","das fɛlt","le champ","lə ʃɑ̃","the field","ðə fiːld","il campo","il ˈkampo","поле","ˈpolʲə","el campo","el ˈkampo","o campo","u ˈkɐ̃pu"],["das Gewitter","das ɡəˈvɪtɐ","l'orage","lɔʁaʒ","the thunderstorm","ðə ˈθʌndəstɔːm","il temporale","il tempoˈraːle","гроза","ɡrɐˈza","la tormenta","la toɾˈmenta","a trovoada","ɐ tɾuvuˈadɐ"],["das Gras","das ɡraːs","l'herbe","lɛʁb","the grass","ðə ɡrɑːs","l'erba","ˈlɛrba","трава","trɐˈva","la hierba","la ˈjeɾβa","a erva","ɐ ˈɛɾvɐ"],["das Meer","das meːɐ","la mer","la mɛʁ","the sea","ðə siː","il mare","il ˈmaːre","море","ˈmorʲə","el mar","el maɾ","o mar","u maɾ"],["das Tal","das taːl","la vallée","la vale","the valley","ðə ˈvæli","la valle","la ˈvalle","долина","dɐˈlʲinə","el valle","el ˈbaʎe","o vale","u ˈvalə"],["der Baum","deːɐ baʊm","l'arbre","laʁbʁ","the tree","ðə triː","l'albero","ˈlalbero","дерево","ˈdʲerʲɪvə","el árbol","el ˈaɾβol","a árvore","ɐ ˈaɾvuɾə"],["der Berg","deːɐ bɛʁk","la montagne","la mɔ̃taɲ","the mountain","ðə ˈmaʊntɪn","la montagna","la monˈtaɲɲa","гора","ɡɐˈra","la montaña","la monˈtaɲa","a montanha","ɐ mõˈtɐɲɐ"],["der Fluss","deːɐ flʊs","la rivière","la ʁivjɛʁ","the river","ðə ˈrɪvə","il fiume","il ˈfjuːme","река","rʲɪˈka","el río","el ˈrio","o rio","u ˈʁiu"]],[["der Himmel","deːɐ ˈhɪməl","le ciel","lə sjɛl","the sky","ðə skaɪ","il cielo","il ˈtʃɛːlo","небо","ˈnʲebə","el cielo","el ˈθjelo","o céu","u ˈsɛw"],["der Mond","deːɐ moːnt","la lune","la lyn","the moon","ðə muːn","la luna","la ˈluːna","луна","lʊˈna","la luna","la ˈluna","a lua","ɐ ˈluɐ"],["der Regen","deːɐ ˈreːɡən","la pluie","la plɥi","the rain","ðə reɪn","la pioggia","la ˈpjɔddʒa","дождь","doʂtʲ","la lluvia","la ˈʎuβja","a chuva","ɐ ˈʃuvɐ"],["der Schnee","deːɐ ʃneː","la neige","la nɛʒ","the snow","ðə snəʊ","la neve","la ˈneːve","снег","snʲek","la nieve","la ˈnjeβe","a neve","ɐ ˈnɛvə"],["der See","deːɐ zeː","le lac","lə lak","the lake","ðə leɪk","il lago","il ˈlaːɡo","озеро","ˈozʲɪrə","el lago","el ˈlaɣo","o lago","u ˈlaɣu"],["der Stein","deːɐ ʃtaɪn","la pierre","la pjɛʁ","the stone","ðə stəʊn","la pietra","la ˈpjɛːtra","камень","ˈkamʲɪnʲ","la piedra","la ˈpjeðɾa","a pedra","ɐ ˈpɛdɾɐ"],["der Strand","deːɐ ʃtrant","la plage","la plaʒ","the beach","ðə biːtʃ","la spiaggia","la ˈspjaddʒa","пляж","plʲaʂ","la playa","la ˈplaʝa","a praia","ɐ ˈpɾajɐ"],["der Wald","deːɐ valt","la forêt","la fɔʁɛ","the forest","ðə ˈfɒrɪst","la foresta","la foˈrɛsta","лес","lʲes","el bosque","el ˈboske","a floresta","ɐ fluˈɾɛʃtɐ"]],[["der Wind","deːɐ vɪnt","le vent","lə vɑ̃","the wind","ðə wɪnd","il vento","il ˈvɛnto","ветер","ˈvʲetʲɪr","el viento","el ˈbjento","o vento","u ˈvẽtu"],["die Blume","diː ˈbluːmə","la fleur","la flœʁ","the flower","ðə ˈflaʊə","il fiore","il ˈfjoːre","цветок","tsvʲɪˈtok","la flor","la floɾ","a flor","ɐ floɾ"],["die Insel","diː ˈɪnzəl","l'île","lil","the island","ði ˈaɪlənd","l'isola","ˈliːzola","остров","ˈostrəf","la isla","la ˈizla","a ilha","ɐ ˈiʎɐ"],["die Kälte","diː ˈkɛltə","le froid","lə fʁwa","the cold","ðə kəʊld","il freddo","il ˈfreddo","холод","ˈxolət","el frío","el ˈfɾio","o frio","u ˈfɾiu"],["die Sonne","diː ˈzɔnə","le soleil","lə sɔlɛl","the sun","ðə sʌn","il sole","il ˈsoːle","солнце","ˈsontsə","el sol","el sol","o sol","u sɔl"],["die Wolke","diː ˈvɔlkə","le nuage","lə nyaʒ","the cloud","ðə klaʊd","la nuvola","la ˈnuːvola","облако","ˈobləkə","la nube","la ˈnuβe","a nuvem","ɐ ˈnuvɐ̃j"],["die Wärme","diː ˈvɛʁmə","la chaleur","la ʃalœʁ","the warmth","ðə wɔːmθ","il calore","il kaˈloːre","тепло","tʲɪˈplo","el calor","el kaˈloɾ","o calor","u kɐˈloɾ"]]]},"temps":{"icon":"🕐","sets":[[["das Jahr","das jaːɐ","l'année","lane","the year","ðə jɪə","l'anno","ˈlanno","год","ɡot","el año","el ˈaɲo","o ano","u ˈɐnu"],["das Jahrhundert","das jaːɐˈhʊndɐt","le siècle","lə sjɛkl","the century","ðə ˈsentʃəri","il secolo","il ˈsɛːkolo","век","vʲek","el siglo","el ˈsiɣlo","o século","u ˈsɛkulu"],["der Feiertag","deːɐ ˈfaɪɐtaːk","le jour férié","lə ʒuʁ feʁje","the public holiday","ðə ˈpʌblɪk ˈhɒlədeɪ","la festività","la festiviˈta","праздник","ˈpraznʲɪk","el día festivo","el ˈdia fesˈtiβo","o feriado","u fɨɾiˈadu"],["der Frühling","deːɐ ˈfryːlɪŋ","le printemps","lə pʁɛ̃tɑ̃p","the spring","ðə sprɪŋ","la primavera","la primaˈvɛːra","весна","vʲɪsˈna","la primavera","la pɾimaˈβeɾa","a primavera","ɐ pɾimɐˈvɛɾɐ"],["der Geburtstag","deːɐ ɡəˈbuːɐtstaːk","l'anniversaire","lanivɛʁsɛʁ","the birthday","ðə ˈbɜːθdeɪ","il compleanno","il compleˈanno","день рождения","dʲenʲ rɐʐˈdʲenʲɪjə","el cumpleaños","el kumpleˈaɲos","o aniversário","u ɐnivɨɾˈsaɾju"],["der Herbst","deːɐ hɛʁpst","l'automne","lotɔmn","the autumn","ði ˈɔːtəm","l'autunno","lauˈtunno","осень","ˈosʲɪnʲ","el otoño","el oˈtoɲo","o outono","u oˈtonu"],["der Monat","deːɐ ˈmoːnat","le mois","lə mwa","the month","ðə mʌnθ","il mese","il ˈmeːze","месяц","ˈmʲesʲɪts","el mes","el mes","o mês","u meʃ"],["der Sommer","deːɐ ˈzɔmɐ","l'été","lete","the summer","ðə ˈsʌmə","l'estate","lesˈtaːte","лето","ˈlʲetə","el verano","el beˈɾano","o verão","u vɨˈɾɐ̃w"]],[["der Tag","deːɐ taːk","le jour","lə ʒuʁ","the day","ðə deɪ","il giorno","il ˈdʒorno","день","dʲenʲ","el día","el ˈdia","o dia","u ˈdiɐ"],["der Winter","deːɐ ˈvɪntɐ","l'hiver","livɛʁ","the winter","ðə ˈwɪntə","l'inverno","linˈvɛrno","зима","zʲɪˈma","el invierno","el imˈbjeɾno","o inverno","u ĩˈvɛɾnu"],["die Ferien","diː ˈfeːʁiən","les vacances","le vakɑ̃sɛ","the holidays","ðə ˈhɒlədeɪz","le vacanze","le vaˈkantse","каникулы","kɐˈnʲikʊlɨ","las vacaciones","las bakaˈθjones","as férias","ɐʃ ˈfɛɾjɐʃ"],["die Minute","diː miˈnuːtə","la minute","la minyt","the minute","ðə ˈmɪnɪt","il minuto","il miˈnuːto","минута","mʲɪˈnutə","el minuto","el miˈnuto","o minuto","u miˈnutu"],["die Nacht","diː naxt","la nuit","la nɥi","the night","ðə naɪt","la notte","la ˈnɔtte","ночь","notɕ","la noche","la ˈnotʃe","a noite","ɐ ˈnojtə"],["die Stunde","diː ˈʃtʊndə","l'heure","lœʁ","the hour","ði ˈaʊə","l'ora","ˈloːra","час","tɕas","la hora","la ˈoɾa","a hora","ɐ ˈɔɾɐ"],["die Woche","diː ˈvɔxə","la semaine","la səmɛn","the week","ðə wiːk","la settimana","la settiˈmaːna","неделя","nʲɪˈdʲelʲə","la semana","la seˈmana","a semana","ɐ sɨˈmɐnɐ"],["die Zeit","diː tsaɪt","le temps","lə tɑ̃p","the time","ðə taɪm","il tempo","il ˈtɛmpo","время","ˈvrʲemʲə","el tiempo","el ˈtjempo","o tempo","u ˈtẽpu"]],[["gestern","ˈɡɛstɐn","hier","jɛʁ","yesterday","ˈjestədeɪ","ieri","ˈjɛːri","вчера","ftɕɪˈra","ayer","aˈʝeɾ","ontem","ˈõtɐ̃j"],["heute","ˈhɔɪtə","aujourd'hui","oʒuʁdɥi","today","təˈdeɪ","oggi","ˈɔddʒi","сегодня","sʲɪˈvodnʲə","hoy","oj","hoje","ˈoʒə"],["morgen","ˈmɔʁɡən","demain","dəmɛ̃","tomorrow","təˈmɒrəʊ","domani","doˈmaːni","завтра","ˈzaftrə","mañana","maˈɲana","amanhã","ɐmɐˈɲɐ̃"],["das Datum","das ˈdaːtʊm","la date","la dat","date","","data","ˈdaːta","дата","","fecha","ˈfetʃa","data",""],["der Abend","deːɐ ˈaːbənt","le soir","lə swaʁ","evening","","sera","ˈseːra","вечер","","tarde-noche","taɾðeˈnotʃe","noite",""],["der April","deːɐ ˈaːpʁɪl","avril","avʁil","April","","aprile","aˈpriːle","апрель","","abril","aˈβɾil","abril",""],["der August","deːɐ ˈaʊɡʊst","août","ut","August","","agosto","aˈɡosto","август","","agosto","aˈɣosto","agosto",""],["der Februar","deːɐ ˈfeːbʁʊaɐ","février","fevʁjɛʁ","February","","febbraio","febˈbraːjo","февраль","","febrero","feˈβɾeɾo","fevereiro",""]]]},"loisirs":{"icon":"🎵","sets":[[["das Ballett","das ˈbalət","le ballet","lə balɛ","ballet","","balletto","balˈlɛtto","балет","","ballet","baˈʎet","ballet",""],["das Foto","das ˈfoːtɔ","la photographie","la fɔtɔɡʁafi","photo","","fotografia","fotoˈɡrafja","фотография","","fotografía","fotoɣɾaˈfia","fotografia",""],["das Hobby","das ˈhɔbi","le loisir préféré","lə lwaziʁ pʁefeʁe","favorite hobby","","passatempo preferito","passaˈtempo prefeˈriːto","любимое хобби","","afición favorita","afiˈθjon faβoˈɾita","passatempo preferido",""],["das Konzert","das ˈkɔntsɐt","le concert","lə kɔ̃sɛʁ","concert","","concerto","konˈtʃɛrto","концерт","","concierto","konˈθjeɾto","concerto",""],["der Ball","deːɐ bal","la balle","la bal","ball","","palla; pallone","ˈpalla palˈloːne","мяч","","pelota; balón","peˈlota baˈlon","bola",""],["der Film","deːɐ fɪlm","le film","lə film","film","","film","film","фильм","","película","peˈlikula","filme",""],["der Fußball","deːɐ ˈfʊsbal","le football","lə foɔtbal","football","","calcio","ˈkaltʃo","футбол","","fútbol","ˈfutbol","futebol",""],["der Wettkampf","deːɐ ˈvɛtkampf","la compétition","la kɔ̃petitjɔ̃","competition","","competizione","kompetiˈtsjoːne","соревнование","","competición","kompetiˈθjon","competição",""]],[["die Fete","diː ˈfeːtə","la fête entre amis","la fɛt ɑ̃tʁ ami","party","","festa","ˈfesta","вечеринка","","fiesta","ˈfjesta","festa",""],["die Flöte","diː ˈfløːtə","la flûte","la flyt","flute","","flauto","flaˈuːto","флейта","","flauta","flaˈuta","flauta",""],["die Freizeit","diː ˈfʁaɪtsaɪt","le temps libre","lə tɑ̃p libʁ","free time; leisure","","tempo libero","ˈtempo liˈbeːro","свободное время; досуг","","tiempo libre","ˈtjempo ˈliβɾe","tempo livre",""],["die Geige","diː ɡaɪˈɡɛ","le violon","lə vjɔlɔ̃","violin","","violino","vjoˈliːno","скрипка","","violín","bioˈlin","violino",""],["die Party","diː ˈpaːɐti","la fête","la fɛt","party","","festa","ˈfesta","вечеринка","","fiesta","ˈfjesta","festa",""]]]},"medias":{"icon":"✉","sets":[[["das Handy","das ˈhɛndi","le téléphone portable","lə telefɔn pɔʁtabl","mobile phone","","cellulare","tʃelluˈlaːre","мобильный телефон","","teléfono móvil","teˈlefono ˈmoβil","telemóvel",""],["der Anruf","deːɐ ˈanʁʊf","l'appel téléphonique","lapɛl telefɔnik","phone call","","telefonata","telefoˈnaːta","телефонный звонок","","llamada telefónica","ʎaˈmaða teleˈfonika","telefonema",""],["der Brief","deːɐ bʁiːf","la lettre","la lɛtʁ","letter","","lettera","letˈteːra","письмо","","carta","ˈkaɾta","carta",""],["der Drucker","deːɐ ˈdʁʊkɐ","l'imprimante","lɛ̃pʁimɑ̃t","printer","","stampante","stamˈpante","принтер","","impresora","impɾeˈsoɾa","impressora",""],["die Datei","diː daˈtaɪ","le fichier","lə fiʃjɛʁ","file","","file","ˈfiːle","файл","","archivo","aɾˈtʃiβo","ficheiro",""],["die Daten","diː ˈdaːtən","les données","le dɔneɛ","data","","dati","ˈdaːti","данные","","datos","ˈdatos","dados",""],["die E-Mail","diː ˈɛmaɪl","mèl","mɛl","email","","e-mail","eˈmaːil","электронная почта","","correo electrónico","koˈreo elekˈtɾoniko","e-mail",""],["die Mail","diː maɪl","le courriel","lə kuʁjɛl","email","","e-mail","eˈmaːil","электронное письмо","","correo","koˈreo","e-mail",""],["die Sendung","diː ˈzɛndʊŋ","l'émission","lemisjɔ̃","broadcast; program","","trasmissione","trasmisˈsjoːne","передача","","programa","pɾoˈɣɾama","emissão",""],["die Zeitung","diː ˈtsaɪtʊŋ","le journal","lə ʒuʁnal","newspaper","","giornale","dʒorˈnaːle","газета","","periódico","peɾjoˈðiko","jornal",""]]]},"travail":{"icon":"💼","sets":[[["der Bürgermeister","deːɐ ˈbʏʁɡɐmaɪstɐ","le maire","lə mɛʁ","the mayor","ðə meə","il sindaco","il ˈsindako","мэр","mɛr","el alcalde","el alˈkalde","o presidente da câmara","u pɾɨziˈdẽtə dɐ ˈkɐmɐɾɐ"],["das Büro","das byˈʁoː","le bureau","lə byʁo","office","","ufficio","ufˈfiːtʃo","офис","","oficina","ofiˈθina","escritório",""],["das Geld","das ɡɛlt","l'argent","laʁʒɑ̃","money","","denaro","deˈnaːro","деньги","","dinero","diˈneɾo","dinheiro",""],["der Beruf","deːɐ bɐˈʊf","le métier","lə metjɛʁ","profession","","professione","profesˈsjoːne","профессия","","profesión","pɾofeˈsjon","profissão",""],["der Betrieb","deːɐ bəˈtʁiːp","l'entreprise","lɑ̃tʁɛpʁiz","company; enterprise","","azienda","aˈtsjenda","предприятие","","empresa","emˈpɾesa","empresa",""],["der Job","deːɐ dʒɔp","le job","lə ʒob","job","","lavoro","laˈvoːro","работа","","trabajo","tɾaˈβaxo","emprego",""],["der Kunde","deːɐ ˈkʊndə","le client","lə kljɑ̃","customer","","cliente","ˈkljɛnte","клиент","","cliente","ˈkljente","cliente",""],["der Lohn","deːɐ loːn","le salaire","lə salɛʁ","wage; salary","","stipendio","stiˈpendjo","зарплата","","salario","saˈlaɾjo","salário",""]],[["der Preis","deːɐ pʁaɪs","le prix","lə pʁi","price","","prezzo","ˈprettso","цена","","precio","ˈpɾeθjo","preço",""],["die Arbeit","diː aʁˈbaɪt","le travail","lə tʁavɛl","work","","lavoro","laˈvoːro","работа","","trabajo","tɾaˈβaxo","trabalho",""],["die Fabrik","diː ˈfaːbʁɪk","l'usine","lyzin","factory","","fabbrica","fabˈbriːka","фабрика; завод","","fábrica","ˈfaβɾika","fábrica",""],["die Firma","diː ˈfɪʁma","la firme","la fiʁm","company; firm","","ditta","ˈditta","фирма","","empresa","emˈpɾesa","firma",""]]]},"verbes":{"icon":"⚡","sets":[[["erklären","ɛɐˈklɛːʁən","expliquer","ɛksplikɛʁ","to explain","tʊ ɪkˈspleɪn","spiegare","spjeˈɡaːre","объяснять","ɐbjɪsˈnʲatʲ","explicar","ekspliˈkaɾ","explicar","ɨʃpliˈkaɾ"],["erreichen","ɛɐˈraɪçən","atteindre","atɛ̃dʁ","to reach","tə riːtʃ","raggiungere","radˈdʒundʒere","достигать","dəsʲtʲɪˈɡatʲ","alcanzar","alkanˈθaɾ","alcançar","alkɐ̃ˈsaɾ"],["essen","ˈɛsən","manger","mɑ̃ʒɛʁ","to eat","tʊ iːt","mangiare","manˈdʒaːre","есть","jesʲtʲ","comer","koˈmeɾ","comer","kuˈmeɾ"],["finden","ˈfɪndən","trouver","tʁuvɛʁ","to find","tə faɪnd","trovare","troˈvaːre","находить","nəxɐˈdʲitʲ","encontrar","eŋkonˈtɾaɾ","encontrar","ẽkõˈtɾaɾ"],["gehen","ˈɡeːən","aller","alɛʁ","to go","tə ɡəʊ","andare","anˈdaːre","идти","ɪtˈtʲi","ir","iɾ","ir","iɾ"],["haben","ˈhaːbən","avoir","avwaʁ","to have","tə hæv","avere","aˈveːre","иметь","ɪˈmʲetʲ","tener","teˈneɾ","ter","teɾ"],["helfen","ˈhɛlfən","aider","ɛdɛʁ","to help","tə help","aiutare","ajuˈtaːre","помогать","pəmɐˈɡatʲ","ayudar","aʝuˈðaɾ","ajudar","ɐʒuˈdaɾ"],["kaufen","ˈkaʊfən","acheter","aʃətɛʁ","to buy","tə baɪ","comprare","komˈpraːre","покупать","pəkʊˈpatʲ","comprar","komˈpɾaɾ","comprar","kõˈpɾaɾ"]],[["kommen","ˈkɔmən","venir","vəniʁ","to come","tə kʌm","venire","veˈniːre","приходить","prʲɪxɐˈdʲitʲ","venir","beˈniɾ","vir","viɾ"],["laufen","ˈlaʊfən","courir","kuʁiʁ","to run","tə rʌn","correre","ˈkorrere","бежать","bʲɪˈʐatʲ","correr","koˈreɾ","correr","kuˈʁeɾ"],["lernen","ˈlɛʁnən","apprendre","apʁɑ̃dʁ","to learn","tə lɜːn","imparare","impaˈraːre","учиться","ʊˈtɕitsə","aprender","apɾenˈdeɾ","aprender","ɐpɾẽˈdeɾ"],["lesen","ˈleːzən","lire","liʁ","to read","tə riːd","leggere","ˈlɛddʒere","читать","tɕɪˈtatʲ","leer","leˈeɾ","ler","leɾ"],["machen","ˈmaxən","faire","fɛʁ","to do","tə duː","fare","ˈfaːre","делать","ˈdʲelətʲ","hacer","aˈθeɾ","fazer","fɐˈzeɾ"],["schlafen","ˈʃlaːfən","dormir","dɔʁmiʁ","to sleep","tə sliːp","dormire","dorˈmiːre","спать","spatʲ","dormir","doɾˈmiɾ","dormir","duɾˈmiɾ"],["schreiben","ˈʃraɪbən","écrire","ekʁiʁ","to write","tə raɪt","scrivere","ˈskriːvere","писать","pʲɪˈsatʲ","escribir","eskɾiˈβiɾ","escrever","ɨʃkɾɨˈveɾ"],["sehen","ˈzeːən","voir","vwaʁ","to see","tə siː","vedere","veˈdeːre","видеть","ˈvʲidʲɪtʲ","ver","beɾ","ver","veɾ"]],[["sein","zaɪn","être","ɛtʁ","to be","tə biː","essere","ˈɛssere","быть","bɨtʲ","ser","seɾ","ser","seɾ"],["spielen","ˈʃpiːlən","jouer","ʒwɛʁ","to play","tə pleɪ","giocare","dʒoˈkaːre","играть","ɪˈɡratʲ","jugar","xuˈɣaɾ","jogar","ʒuˈɣaɾ"],["suchen","ˈzuːxən","chercher","ʃɛʁʃɛʁ","to search","tə sɜːtʃ","cercare","tʃerˈkaːre","искать","ɪsˈkatʲ","buscar","busˈkaɾ","procurar","pɾukuˈɾaɾ"],["trinken","ˈtrɪŋkən","boire","bwaʁ","to drink","tə drɪŋk","bere","ˈbeːre","пить","pʲitʲ","beber","beˈβeɾ","beber","bɨˈbeɾ"],["vergessen","fɛɐˈɡɛsən","oublier","ubljɛʁ","to forget","tə fəˈɡet","dimenticare","dimentiˈkaːre","забывать","zəbɨˈvatʲ","olvidar","olβiˈðaɾ","esquecer","ɨʃkɨˈseɾ"],["verlassen","fɛɐˈlasən","quitter","kitɛʁ","to leave","tə liːv","lasciare","laʃˈʃaːre","покидать","pəkʲɪˈdatʲ","abandonar","aβandoˈnaɾ","abandonar","ɐbɐ̃duˈnaɾ"],["verstehen","fɛɐˈʃteːən","comprendre","kɔ̃pʁɑ̃dʁ","to understand","tʊ ʌndəˈstænd","capire","kaˈpiːre","понимать","pənʲɪˈmatʲ","entender","entenˈdeɾ","entender","ẽtẽˈdeɾ"],["überlegen","yːbɐˈleːɡən","réfléchir","ʁefleʃiʁ","to consider","tə kənˈsɪdə","riflettere","riˈflɛttere","обдумывать","ɐbˈdumɨvətʲ","reflexionar","refleksjoˈnaɾ","refletir","ʁɨflɨˈtiɾ"]]]},"adjectifs":{"icon":"◆","sets":[[["alt","alt","vieux","vjœ","old","əʊld","vecchio","ˈvɛkkjo","старый","ˈstarɨj","viejo","ˈbjexo","velho","ˈvɛʎu"],["begeistert","bəˈɡaɪstɐt","enthousiaste","ɑ̃tuzjast","enthusiastic","ɪnθjuːzɪˈæstɪk","entusiasta","entuˈzjasta","восторженный","vɐsˈtorʐɨnːɨj","entusiasmado","entusjazˈmaðo","entusiasmado","ẽtuzjɐʒˈmadu"],["enttäuscht","ɛntˈtɔɪʃt","déçu","desy","disappointed","dɪsəˈpɔɪntɪd","deluso","deˈluːzo","разочарованный","rəzətɕɪˈrovənːɨj","decepcionado","deθepθjoˈnaðo","desapontado","dɨzɐpõˈtadu"],["faul","faʊl","paresseux","paʁɛsœ","lazy","ˈleɪzi","pigro","ˈpiːɡro","ленивый","lʲɪˈnʲivɨj","perezoso","peɾeˈθoso","preguiçoso","pɾɨɡiˈsozu"],["fleißig","ˈflaɪsɪç","travailleur","tʁavɛlœʁ","hard-working","hɑːd ˈwɜːkɪŋ","diligente","diliˈdʒɛnte","прилежный","prʲɪˈlʲeʐnɨj","trabajador","tɾaβaxaˈðoɾ","trabalhador","tɾɐbɐʎɐˈdoɾ"],["freundlich","ˈfrɔɪntlɪç","aimable","ɛmabl","friendly","ˈfrendli","gentile","dʒenˈtiːle","дружелюбный","drʊʐɨˈlʲubnɨj","amable","aˈmaβle","amável","ɐˈmavɛl"],["glücklich","ˈɡlʏklɪç","heureux","œʁœ","happy","ˈhæpi","felice","feˈliːtʃe","счастливый","ɕɕɪˈslʲivɨj","feliz","feˈliθ","feliz","fɨˈliʃ"],["groß","ɡroːs","grand","ɡʁɑ̃","big","bɪɡ","grande","ˈɡrande","большой","bɐlʲˈʂoj","grande","ˈɡɾande","grande","ˈɡɾɐ̃də"]],[["gut","ɡuːt","bon","bɔ̃","good","ɡʊd","buono","ˈbwɔːno","хороший","xɐˈroʂɨj","bueno","ˈbweno","bom","bõ"],["hilfsbereit","ˈhɪlfsbəraɪt","serviable","sɛʁvjabl","helpful","ˈhelpfl","disponibile","dispoˈniːbile","отзывчивый","ɐdˈzɨftɕɪvɨj","servicial","seɾβiˈθjal","prestável","pɾɨʃˈtavɛl"],["jung","jʊŋ","jeune","ʒœn","young","jʌŋ","giovane","ˈdʒoːvane","молодой","məlɐˈdoj","joven","ˈxoβen","jovem","ˈʒɔvɐ̃j"],["klein","klaɪn","petit","pəti","small","smɔːl","piccolo","ˈpikkolo","маленький","ˈmalʲɪnʲkʲɪj","pequeño","peˈkeɲo","pequeno","pɨˈkenu"],["krank","kraŋk","malade","malad","sick","sɪk","malato","maˈlaːto","больной","bɐlʲˈnoj","enfermo","emˈfeɾmo","doente","duˈẽtə"],["lustig","ˈlʊstɪç","drôle","dʁol","funny","ˈfʌni","divertente","diverˈtɛnte","смешной","smʲɪʂˈnoj","gracioso","ɡɾaˈθjoso","engraçado","ẽɡɾɐˈsadu"],["müde","ˈmyːdə","fatigué","fatiɡye","tired","ˈtaɪəd","stanco","ˈstaŋko","усталый","ʊsˈtalɨj","cansado","kanˈsaðo","cansado","kɐ̃ˈsadu"],["neugierig","ˈnɔɪɡiːʁɪç","curieux","kyʁjœ","curious","ˈkjʊərɪəs","curioso","kuˈrjoːzo","любопытный","lʲʉbɐˈpɨtnɨj","curioso","kuˈɾjoso","curioso","kuɾiˈozu"]],[["schlecht","ʃlɛçt","mauvais","movɛ","bad","bæd","cattivo","katˈtiːvo","плохой","plɐˈxoj","malo","ˈmalo","mau","maw"],["schnell","ʃnɛl","rapide","ʁapid","fast","fɑːst","veloce","veˈloːtʃe","быстрый","ˈbɨstrɨj","rápido","ˈrapiðo","rápido","ˈʁapidu"],["schön","ʃøːn","beau","bo","beautiful","ˈbjuːtɪfl","bello","ˈbɛllo","красивый","krɐˈsʲivɨj","bonito","boˈnito","bonito","buˈnitu"],["schüchtern","ˈʃʏçtɐn","timide","timid","shy","ʃaɪ","timido","ˈtiːmido","застенчивый","zɐˈsʲtʲentɕɪvɨj","tímido","ˈtimiðo","tímido","ˈtimidu"],["selbstsicher","ˈzɛlpstzɪçɐ","sûr de soi","syʁ də swa","self-confident","self ˈkɒnfɪdənt","sicuro di sé","siˈkuːro di se","уверенный","ʊˈvʲerʲɪnːɨj","seguro de sí","seˈɣuɾo ðe si","autoconfiante","awtokõfiˈɐ̃tə"],["stolz","ʃtɔlts","fier","fjɛʁ","proud","praʊd","orgoglioso","orɡoʎˈʎoːzo","гордый","ˈɡordɨj","orgulloso","oɾɣuˈʎoso","orgulhoso","oɾɡuˈʎozu"],["traurig","ˈtraʊʁɪç","triste","tʁist","sad","sæd","triste","ˈtriste","грустный","ˈɡrusnɨj","triste","ˈtɾiste","triste","ˈtɾiʃtə"],["wichtig","ˈvɪçtɪç","important","ɛ̃pɔʁtɑ̃","important","ɪmˈpɔːtnt","importante","imporˈtante","важный","ˈvaʐnɨj","importante","impoɾˈtante","importante","ĩpuɾˈtɐ̃tə"]]]}};
+</script>
+<script>
+document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
+document.getElementById('p-profile').classList.remove('hidden');
+
+const LANGS={de:{n:"Deutsch",f:"🇩🇪",i:0},fr:{n:"Français",f:"🇫🇷",i:2},
+ en:{n:"English",f:"🇬🇧",i:4},it:{n:"Italiano",f:"🇮🇹",i:6},
+ ru:{n:"Русский",f:"🇷🇺",i:8},es:{n:"Español",f:"🇪🇸",i:10},pt:{n:"Português",f:"🇵🇹",i:12}};
+const PHON_OK=['de','fr','es','it'];
+/* v = durée de chute (s) · g = rythme d'apparition (s) */
+const SPEEDS=[{k:'slow',v:16,g:4},{k:'medium',v:11,g:3},{k:'fast',v:7.5,g:2.2},
+              {k:'veryFast',v:5,g:1.6},{k:'extreme',v:3.2,g:1.1}];
+const LANES=[-1,0,1];      /* couloirs horizontaux pour éviter les recouvrements */
+let laneIdx=0;
+const SPEED_IC=['①','②','③','④','⑤'];
+const SIZES=[5,8,10,12,15,20];
+const ALL='__all__';
+
+/* ══ STOCKAGE (dégradation propre si indisponible) ══ */
+let memDB={profiles:{},last:null}, canSave=true;
+const DB={
+  load(){ try{ const r=localStorage.getItem('lexio_v1');
+      if(r) memDB=JSON.parse(r); }catch(e){ canSave=false; } return memDB; },
+  save(){ try{ localStorage.setItem('lexio_v1',JSON.stringify(memDB)); }
+    catch(e){ canSave=false; } }
+};
+DB.load();
+
+/* ══ ÉTAT ══ */
+let ui='fr', P=null;
+let theme=ALL, spd=1, listSize=10;
+let deck=[],qi=0,score=0,ok=0,no=0,ms=0,session=[];
+let live=[],running=false,raf=null,last=null;
+let t0=0,tPen=0,lastSpawn=0;
+const T=()=>I18N[ui];
+const S=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+const HAS_PTR = (typeof window!=='undefined') && ('PointerEvent' in window);
+function point(e){
+  if(e.touches&&e.touches.length) return {x:e.touches[0].clientX,y:e.touches[0].clientY};
+  if(e.changedTouches&&e.changedTouches.length)
+    return {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
+  return {x:e.clientX,y:e.clientY};
+}
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* index global des mots : clé = mot source allemand (colonne 0) */
+const ALLW=[];
+for(const th in VOCAB) VOCAB[th].sets.forEach(s=>s.forEach(w=>ALLW.push({th,w})));
+const keyOf=w=>w[0];
+
+function newProfile(name){
+  return {name,ui,src:'de',tgt:'fr',phon:true,both:false,known:{},stat:{},
+          games:0,right:0,ans:0,size:10,speed:1};
+}
+function saveP(){ if(!P)return; memDB.profiles[P.name]=P; memDB.last=P.name; DB.save(); }
+
+/* ══ NAVIGATION ══ */
+function go(id){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('bar').classList.add('hidden');
+  document.getElementById('z-ok').classList.add('hidden');
+  document.getElementById('z-no').classList.add('hidden');
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById('top').classList.toggle('hidden', id==='p-profile');
+  if(id==='p-pair') paintPair();
+}
+function goHome(){
+  try{ stop(); }catch(e){}
+  closeModal();
+  try{ refreshHome(); }catch(e){ if(window.__lexioErr) window.__lexioErr('home: '+e.message); }
+  go('p-home');
+}
+function switchProfile(){ stop(); paintProfile(); go('p-profile'); }
+
+/* ══ TEXTES ══ */
+function paintAll(){
+  if(typeof I18N==='undefined'||!I18N[ui]){
+    if(window.__lexioErr) window.__lexioErr('I18N introuvable (ui='+ui+')');
+    return;
+  }
+  const t=T(); document.documentElement.lang=ui;
+  S('brand-sub',t.appSub); S('l-uilang',t.uiLang); S('l-name',t.yourName);
+  document.getElementById('name-in').placeholder=t.namePh;
+  S('b-enter',t.start);
+  S('save-note', canSave? t.saveWarn : t.noSave);
+  S('l-known',t.known); S('l-left',t.remaining); S('l-acc',t.accuracy); S('l-games',t.games);
+  S('b-play',t.play); S('b-langs',t.wordsIn+' / '+t.translatedTo);
+  S('b-switch',t.changeProfile); S('b-reset',t.resetProgress);
+  S('l-src',t.wordsIn); S('l-tgt',t.translatedTo); S('l-phon',t.showPhon); S('b-ok1',t.continueBtn);
+  S('l-both',t.bothWays); S('both-help',t.bothWaysHelp);
+  S('t-theme',t.chooseTheme); S('b-back2',t.home); S('b-next2',t.continueBtn);
+  S('t-size',t.nextRound); S('l-size',t.nextSize); S('l-speed',t.speed);
+  S('b-back3',t.back); S('b-go',t.play);
+  S('zl-ok',t.correct); S('zl-no',t.wrong);
+  S('l-iknow',t.iKnowThese+' — '+t.needStreak); S('l-next',t.nextSize);
+  S('b-home2',t.home); S('b-cont',t.continueBtn);
+  S('m-no',t.cancel); S('m-yes',t.confirm);
+  try{ paintProfile(); }catch(e){ if(window.__lexioErr) window.__lexioErr('chips: '+e.message); }
+}
+function paintProfile(){
+  /* les puces sont déjà dans le HTML : on ne fait que les activer */
+  const c=document.getElementById('ui-langs');
+  const existing=(c&&c.querySelectorAll)?c.querySelectorAll('[data-ui]'):[];
+  if(existing.length){
+    for(let i=0;i<existing.length;i++){
+      const d=existing[i], k=d.getAttribute('data-ui');
+      if(k===ui) d.classList.add('on'); else d.classList.remove('on');
+      if(!d.__b){ d.__b=1;
+        d.addEventListener('click',function(){ ui=k; paintAll(); });
+        d.addEventListener('touchend',function(ev){
+          if(ev.cancelable)ev.preventDefault(); ui=k; paintAll(); },{passive:false});
+      }
+    }
+  } else {
+    c.innerHTML='';
+    for(const k in I18N){
+      const d=document.createElement('div');
+      d.className='chip'+(k===ui?' on':'');
+      d.innerHTML='<span class="fl">'+I18N[k].flag+'</span><span>'+I18N[k].name+'</span>';
+      d.onclick=()=>{ui=k;paintAll();};
+      c.appendChild(d);
+    }
+  }
+  const pl=document.getElementById('prof-list'); pl.innerHTML='';
+  const names=Object.keys(memDB.profiles);
+  names.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='chip'; d.innerHTML=`<span>${esc(n)}</span>`;
+    d.onclick=()=>{ P=memDB.profiles[n]; ui=P.ui||ui; paintAll(); saveP(); goHome(); };
+    pl.appendChild(d);
+  });
+}
+let lastEnter=0;
+function enterProfile(){
+  const now=Date.now();
+  if(now-lastEnter<400) return;      /* évite le double déclenchement */
+  lastEnter=now;
+  const inp=document.getElementById('name-in');
+  try{ inp.blur(); }catch(e){}       /* referme le clavier iOS */
+  const v=inp.value.trim();
+  const name=v||T().profile;
+  P=memDB.profiles[name]||newProfile(name);
+  P.ui=ui; memDB.profiles[name]=P; memDB.last=name; DB.save();
+  goHome();
+}
+
+/* ══ ACCUEIL ══ */
+function poolFor(th){
+  if(th!==ALL && !VOCAB[th]) th=ALL;
+  return ALLW.filter(x=>{
+    const k=keyOf(x.w);
+    return (th===ALL||x.th===th) && !P.known[k] && !isKnown(k);
+  });
+}
+function refreshHome(){
+  const t=T();
+  S('hi',`${t.hello}, ${P.name}`);
+  const kn=Object.keys(P.known).length;
+  S('h-known',kn); S('h-left',ALLW.length-kn);
+  S('h-acc', P.ans? Math.round(P.right/P.ans*100)+'%' : '—');
+  S('h-games',P.games);
+  S('pv-a',LANGS[P.src].f+' '+LANGS[P.src].n);
+  S('pv-b',LANGS[P.tgt].f+' '+LANGS[P.tgt].n);
+  S('who',P.name);
+  document.getElementById('t-quit').style.visibility='hidden';
+}
+
+/* ══ LANGUES ══ */
+function paintPair(){
+  [['src-langs',true],['tgt-langs',false]].forEach(([id,isS])=>{
+    const c=document.getElementById(id); c.innerHTML='';
+    for(const k in LANGS){
+      const d=document.createElement('div');
+      d.className='chip'+((isS?P.src:P.tgt)===k?' on':'');
+      d.innerHTML=`<span class="fl">${LANGS[k].f}</span><span>${LANGS[k].n}</span>`;
+      d.onclick=()=>{
+        if(isS){P.src=k; if(P.tgt===k)P.tgt=(k==='fr'?'de':'fr');}
+        else{P.tgt=k; if(P.src===k)P.src=(k==='de'?'fr':'de');}
+        saveP(); paintPair();
+      };
+      c.appendChild(d);
+    }
+  });
+  S('pv2-a',LANGS[P.src].f+' '+LANGS[P.src].n);
+  S('pv2-b',LANGS[P.tgt].f+' '+LANGS[P.tgt].n);
+  S('t-pair',LANGS[P.src].n+' → '+LANGS[P.tgt].n);
+  S('phon-warn',PHON_OK.includes(P.src)?'':T().phonWarn);
+  document.getElementById('tog-phon').classList.toggle('on',P.phon);
+  document.getElementById('tog-both').classList.toggle('on',!!P.both);
+}
+function swap(){const a=P.src;P.src=P.tgt;P.tgt=a;saveP();paintPair();}
+function togPhon(){P.phon=!P.phon;saveP();
+  document.getElementById('tog-phon').classList.toggle('on',P.phon);}
+function togBoth(){P.both=!P.both;saveP();
+  document.getElementById('tog-both').classList.toggle('on',!!P.both);}
+
+/* ══ THÈMES ══ */
+function openThemes(){
+  const t=T(), g=document.getElementById('theme-grid'); g.innerHTML='';
+  const mk=(key,icon,label,tot)=>{
+    const left=poolFor(key).length, kn=tot-left;
+    const d=document.createElement('div');
+    d.className='card'+(key===theme?' on':'')+(left===0?' done':'');
+    d.innerHTML=`<span class="ic">${icon}</span><span class="tx">
+      <span class="t1">${label}</span>
+      <span class="t2">${kn} / ${tot} ${t.known1}</span></span>
+      <span class="pbar" style="width:${tot?Math.round(kn/tot*100):0}%"></span>`;
+    d.onclick=()=>{theme=key;
+      document.querySelectorAll('#theme-grid .card').forEach(x=>x.classList.remove('on'));
+      d.classList.add('on');};
+    g.appendChild(d);
+  };
+  mk(ALL,'✦',t.allThemes,ALLW.length);
+  for(const k in VOCAB){
+    let n=0; VOCAB[k].sets.forEach(s=>n+=s.length);
+    mk(k,VOCAB[k].icon,THEME_I18N[k][ui],n);
+  }
+  go('p-theme');
+}
+
+/* ══ TAILLE + VITESSE ══ */
+function paintSize(){
+  const t=T(), avail=poolFor(theme).length;
+  const c=document.getElementById('size-chips'); c.innerHTML='';
+  SIZES.forEach(n=>{
+    if(n>avail && n!==SIZES[0]) return;
+    const d=document.createElement('div');
+    d.className='chip num'+(n===listSize?' on':'');
+    d.textContent=n;
+    d.onclick=()=>{listSize=n;P.size=n;saveP();paintSize();};
+    c.appendChild(d);
+  });
+  const g=document.getElementById('speed-grid'); g.innerHTML='';
+  SPEEDS.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='card col'+(i===spd?' on':'');
+    d.innerHTML=`<span class="ic">${SPEED_IC[i]}</span><span class="tx">
+      <span class="t1">${t[s.k]}</span><span class="t2">${s.v}s · ${s.g}s</span></span>`;
+    d.onclick=()=>{spd=i;P.speed=i;saveP();paintSize();};
+    g.appendChild(d);
+  });
+  S('t-size',theme===ALL?t.allThemes:THEME_I18N[theme][ui]);
+}
+document.getElementById('b-next2').addEventListener('click',()=>setTimeout(paintSize,0));
+
+/* ══ MODÈLE DE MAÎTRISE ══
+   Un mot quitte la liste quand il a 3 bonnes réponses d'affilée
+   ET qu'il a été réécrit correctement (phase d'écriture).
+   Une erreur remet le compteur d'affilée à zéro.                        */
+const STEPS=[3,2,1];                 /* bonnes réponses exigées avant d'écrire */
+function st(k){ const s=P.stat[k]||(P.stat[k]={ok:0,err:0,streak:0,t:[],prod:false,pf:0});
+  if(s.pf===undefined) s.pf=0; return s; }
+function needStreak(k){ const s=P.stat[k];
+  return STEPS[Math.min(s?s.pf||0:0, STEPS.length-1)]; }
+function avgT(s){ if(!s.t||!s.t.length) return 99999;
+  return s.t.reduce((a,b)=>a+b,0)/s.t.length; }
+function isKnown(k){ const s=P.stat[k]; return !!(s&&s.prod); }
+function needsProd(k){ const s=P.stat[k];
+  return !!(s&&!s.prod&&s.streak>=needStreak(k)); }
+
+/* ══ CONSTRUCTION DE LA LISTE ══
+   Priorité : mots en erreur, puis jamais vus, puis les plus LENTS.
+   Les mots rapides et sans faute sortent naturellement les premiers.    */
+function build(){
+  if(theme!==ALL && !VOCAB[theme]) theme=ALL;   /* thème absent de ce niveau */
+  let pool=poolFor(theme);
+  if(!pool.length) return [];
+  const rank=x=>{
+    const k=keyOf(x.w), s=P.stat[k];
+    if(s&&s.err>0&&s.streak===0) return 0;   /* fautes récentes */
+    if(!s) return 1;                          /* jamais vu */
+    if(s.streak>=needStreak(keyOf(x.w))) return 2;   /* prêt pour l'écriture */
+    return 3;
+  };
+  pool=pool.slice().sort((a,b)=>{
+    const d=rank(a)-rank(b); if(d) return d;
+    const sa=P.stat[keyOf(a.w)], sb=P.stat[keyOf(b.w)];
+    return avgT(sb||{t:[]})-avgT(sa||{t:[]});   /* les plus lents d'abord */
+  });
+  const take=pool.slice(0,Math.min(listSize,pool.length)).map(x=>x.w);
+  return take.sort(()=>Math.random()-.5).map(w=>{
+    /* sens d'affichage : fixe, ou alterné si l'option est active */
+    let si=LANGS[P.src].i, ti=LANGS[P.tgt].i;
+    if(P.both && Math.random()<0.5){ const a=si; si=ti; ti=a; }
+    let right=Math.random()<0.55, shown=w[ti];
+    if(!right){
+      const o=take.filter(x=>x[ti]!==w[ti]);
+      if(o.length) shown=o[Math.floor(Math.random()*o.length)][ti]; else right=true;
+    }
+    return {k:keyOf(w),w:w,si:si,ti:ti,s:w[si],p:w[si+1]||'',
+            t:shown,truth:w[ti],ok:right};
+  });
+}
+
+/* ══ PARTIE ══ */
+function start(){
+  stop();
+  document.querySelectorAll('.bub,.pop').forEach(e=>e.remove());
+  deck=build();
+  if(!deck.length){ modal(T().allKnown,T().chooseAnother,()=>{closeModal();openThemes();}); return; }
+  qi=0;score=0;ok=0;no=0;ms=0;session=[];live=[];running=true;
+  t0=performance.now(); tPen=0; lastSpawn=0;
+  S('hud-mid',`${LANGS[P.src].f}→${LANGS[P.tgt].f} · ${theme===ALL?T().allThemes:THEME_I18N[theme][ui]}`);
+  S('hud-score','0'); S('hud-i','0'); S('hud-n',deck.length); S('hud-time','0.0s');
+  document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('top').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('bar').classList.remove('hidden');
+  document.getElementById('z-ok').classList.remove('hidden');
+  document.getElementById('z-no').classList.remove('hidden');
+  document.getElementById('bar').style.width='0%';
+  spawn();
+  if(!raf){last=null;raf=requestAnimationFrame(loop);}
+}
+
+/* Un nouveau mot apparaît dès qu'un mot est trié, ET de toute façon
+   au bout d'une durée de chute complète, même si rien n'a été trié.   */
+function spawn(){
+  if(!running||qi>=deck.length) return;
+  const d=deck[qi++];
+  const el=document.createElement('div');
+  el.className='bub';
+  const ip=(P.phon&&d.p)?`<div class="bi">[${esc(d.p)}]</div>`:'';
+  el.innerHTML=`<div class="bs">${esc(d.s)}</div>${ip}<div class="bt">${esc(d.t)}</div>`;
+  el.style.left='50%'; el.style.top='84px';
+  document.body.appendChild(el);
+  const half=el.offsetWidth/2, guard=118;
+  const lo=guard+half+8, hi=window.innerWidth-guard-half-8;
+  let cx=window.innerWidth/2;
+  if(hi>lo){
+    const span=Math.min(78,(hi-lo)/2);
+    cx=window.innerWidth/2 + LANES[laneIdx%LANES.length]*span;
+    cx=Math.max(lo,Math.min(hi,cx));
+  }
+  laneIdx++;
+  el.style.left=cx+'px';
+  const m={el,d,y:84,vy:(VH-84)/(SPEEDS[spd].v*1000),
+           ans:false,drag:false,ox:0,oy:0,born:performance.now()};
+  live.push(m);
+  lastSpawn=performance.now();
+  if(HAS_PTR) el.addEventListener('pointerdown',e=>down(e,m),{passive:false});
+  else{ el.addEventListener('touchstart',e=>down(e,m),{passive:false});
+        el.addEventListener('mousedown',e=>down(e,m),{passive:false}); }
+}
+
+/* vrai si aucun mot n'occupe encore le haut de l'écran */
+function topClear(){
+  for(let i=0;i<live.length;i++){
+    const m=live[i];
+    if(!m.ans && m.y < 196) return false;
+  }
+  return true;
+}
+
+function resolve(m,right,byUser){
+  m.ans=true;
+  const s=st(m.d.k), dt=performance.now()-m.born;
+  if(byUser&&right){
+    score++;ok++;s.ok++;s.streak++;P.right++;
+    s.t.push(dt); if(s.t.length>5)s.t.shift();
+    pop(T().plus1,m.el,'var(--ok)'); m.el.classList.add('y');
+  } else if(byUser){
+    no++;s.err++;s.streak=0;
+    pop(m.d.ok?T().wasRight:T().wasWrong,m.el,'var(--no)'); m.el.classList.add('n');
+  } else {
+    ms++;s.err++;s.streak=0; m.el.classList.add('n');
+  }
+  P.ans++;
+  session.push({k:m.d.k,s:m.d.s,t:m.d.truth,good:byUser&&right,dt:Math.round(dt)});
+  const done=ok+no+ms;
+  S('hud-score',score); S('hud-i',done);
+  document.getElementById('bar').style.width=(done/deck.length*100)+'%';
+}
+
+function clearBub(m,delay){
+  /* un mot trié rapproche la prochaine apparition sans la déclencher
+     d'un coup : la boucle s'en charge, ce qui évite les rafales      */
+  const g=SPEEDS[spd].g*1000;
+  lastSpawn=Math.min(lastSpawn, performance.now()-g+260);
+  setTimeout(()=>{
+    try{m.el.remove()}catch(e){}
+    live=live.filter(x=>x!==m);
+    if(running && !live.length && qi>=deck.length) end();
+  },delay);
+}
+
+function down(e,m){
+  if(m.ans)return;
+  if(e.cancelable) e.preventDefault();
+  const pt=point(e);
+  m.drag=true; window.__dragging=true;
+  const r=m.el.getBoundingClientRect();
+  m.ox=pt.x-(r.left+r.width/2); m.oy=pt.y-r.top;
+  m.el.classList.add('drag');
+  if(e.pointerId!==undefined){ try{ m.el.setPointerCapture(e.pointerId); }catch(_){} }
+  const zo=document.getElementById('z-ok'), zn=document.getElementById('z-no');
+  function mv(ev){
+    if(!m.drag)return;
+    if(ev.cancelable) ev.preventDefault();
+    const p=point(ev);
+    m.el.style.left=(p.x-m.ox)+'px';
+    m.y=p.y-m.oy; m.el.style.top=m.y+'px';
+    zo.classList.toggle('hot',hit(p.x,p.y,zo));
+    zn.classList.toggle('hot',hit(p.x,p.y,zn));
+  }
+  function up(ev){
+    if(!m.drag)return; m.drag=false; window.__dragging=false; detach();
+    m.el.classList.remove('drag');
+    zo.classList.remove('hot'); zn.classList.remove('hot');
+    const p=point(ev);
+    const a=hit(p.x,p.y,zo), b=hit(p.x,p.y,zn);
+    if((!a&&!b)||m.ans)return;
+    resolve(m,(a===m.d.ok),true);
+    const z=(a?zo:zn).getBoundingClientRect();
+    m.el.style.transition='left .2s,top .2s,opacity .2s';
+    m.el.style.left=(z.left+z.width/2)+'px';
+    m.el.style.top=(z.top+z.height/2-m.el.offsetHeight/2)+'px';
+    m.el.style.opacity='0';
+    clearBub(m,200);
+  }
+  function detach(){
+    ['pointermove','pointerup','pointercancel','touchmove','touchend','touchcancel','mousemove','mouseup']
+      .forEach(t=>document.removeEventListener(t,t.indexOf('move')>0?mv:up));
+    document.removeEventListener('pointermove',mv);
+    document.removeEventListener('touchmove',mv);
+    document.removeEventListener('mousemove',mv);
+    document.removeEventListener('pointerup',up);
+    document.removeEventListener('pointercancel',up);
+    document.removeEventListener('touchend',up);
+    document.removeEventListener('touchcancel',up);
+    document.removeEventListener('mouseup',up);
+  }
+  m._detach=detach;
+  if(HAS_PTR){
+    document.addEventListener('pointermove',mv,{passive:false});
+    document.addEventListener('pointerup',up,{passive:false});
+    document.addEventListener('pointercancel',up,{passive:false});
+  } else {
+    document.addEventListener('touchmove',mv,{passive:false});
+    document.addEventListener('touchend',up,{passive:false});
+    document.addEventListener('touchcancel',up,{passive:false});
+    document.addEventListener('mousemove',mv,{passive:false});
+    document.addEventListener('mouseup',up,{passive:false});
+  }
+}
+function hit(x,y,z){const r=z.getBoundingClientRect(),p=26;
+  return x>=r.left-p&&x<=r.right+p&&y>=r.top-p&&y<=r.bottom+p;}
+
+function loop(ts){
+  if(!running){raf=null;return;}
+  if(!last)last=ts;
+  const dt=ts-last; last=ts;
+  const now=performance.now();
+  const floor=VH-132;
+  /* chronomètre */
+  S('hud-time',((now-t0+tPen)/1000).toFixed(1)+'s');
+  /* déplacement */
+  for(let i=live.length-1;i>=0;i--){
+    const m=live[i];
+    if(m.ans||m.drag) continue;
+    m.y+=m.vy*dt; m.el.style.top=m.y+'px';
+    if(m.y>=floor){
+      resolve(m,false,false);
+      m.el.style.transition='opacity .3s'; m.el.style.opacity='0';
+      clearBub(m,300);
+    }
+  }
+  /* apparition au rythme choisi, même si rien n'a été trié,
+     mais jamais par-dessus un mot encore proche du haut          */
+  if(qi<deck.length && now-lastSpawn>=SPEEDS[spd].g*1000 && topClear()) spawn();
+  if(!live.length && qi>=deck.length){ end(); return; }
+  raf=requestAnimationFrame(loop);
+}
+
+function pop(txt,el,col){
+  const r=el.getBoundingClientRect();
+  const p=document.createElement('div');
+  p.className='pop'; p.textContent=txt; p.style.color=col;
+  p.style.left=(r.left+r.width/2)+'px'; p.style.top=(r.top-12)+'px';
+  document.body.appendChild(p); setTimeout(()=>p.remove(),960);
+}
+
+/* ══ FIN DE MANCHE ══ */
+let roundTime=0, prodQueue=[], prodIdx=0;
+function end(){
+  running=false; if(raf){cancelAnimationFrame(raf);raf=null;}
+  roundTime=(performance.now()-t0)/1000;
+  P.games++; saveP();
+  /* les mots ayant atteint la série requise passent à l'écriture */
+  prodQueue=[]; const seen=new Set();
+  session.forEach(x=>{
+    if(seen.has(x.k))return; seen.add(x.k);
+    if(needsProd(x.k)) prodQueue.push(x.k);
+  });
+  prodIdx=0;
+  if(prodQueue.length){ openProd(); } else { showScore(); }
+}
+
+function showScore(){
+  const t=T(), n=deck.length, pct=Math.round(score/n*100);
+  document.getElementById('ring').style.setProperty('--p',pct);
+  S('sc-num',score+'/'+n);
+  /* le temps sert à repérer les mots qui demandent de la réflexion */
+  const times=session.filter(x=>x.good).map(x=>x.dt);
+  const moy=times.length? times.reduce((a,b)=>a+b,0)/times.length/1000 : 0;
+  S('sc-time',roundTime.toFixed(1)+'s');
+  S('sc-target',t.avgTime+' : '+moy.toFixed(1)+'s');
+  const badge=document.getElementById('sc-badge');
+  badge.textContent=''; badge.className='badge';
+  let ti;
+  if(pct===100)ti=t.perfect; else if(pct>=80)ti=t.excellent;
+  else if(pct>=60)ti=t.notBad; else if(pct>=40)ti=t.keepGoing; else ti=t.tryAgain;
+  S('sc-title',ti);
+  /* liste des mots avec progression */
+  const wl=document.getElementById('wlist'); wl.innerHTML='';
+  const seen=new Set();
+  session.forEach(x=>{
+    if(seen.has(x.k))return; seen.add(x.k);
+    const s=st(x.k);
+    /* pastilles : nombre de bonnes réponses exigées avant l'écriture,
+       qui diminue après chaque échec (3 puis 2 puis 1)                */
+    const req=needStreak(x.k), dots=[];
+    for(let i=0;i<req;i++)
+      dots.push(`<span class="dot${i<s.streak?' f':''}"></span>`);
+    if(s.prod) dots.push('<span class="dot f"></span>');
+    const row=document.createElement('div');
+    row.className='wrow'+(P.known[x.k]||isKnown(x.k)?' k':'');
+    row.innerHTML=`<span class="bx">✓</span><span class="wt">
+      <span class="w1">${esc(x.s)}</span>
+      <span class="w2">${esc(x.t)} · ${(x.dt/1000).toFixed(1)}s</span></span>
+      <span class="dots">${dots.join('')}</span>
+      <span class="mk ${x.good?'y':'n'}">${x.good?'✓':'✗'}</span>`;
+    row.onclick=()=>{
+      if(P.known[x.k]){ delete P.known[x.k]; row.classList.remove('k'); }
+      else { P.known[x.k]=1; row.classList.add('k'); }
+      saveP(); paintNextSizes();
+    };
+    wl.appendChild(row);
+  });
+  paintNextSizes();
+  const bc=document.getElementById('b-cont');
+  bc.textContent = t.continueBtn;
+  bc.onclick = continueRound;
+  document.getElementById('top').classList.remove('hidden');
+  go('p-score');
+}
+
+function paintNextSizes(){
+  const avail=poolFor(theme).length;
+  const c=document.getElementById('next-chips'); c.innerHTML='';
+  if(!avail){ c.innerHTML=`<div class="tiny" style="padding:6px">${T().allKnown}</div>`; return; }
+  SIZES.forEach(n=>{
+    if(n>avail && n!==SIZES[0]) return;
+    const d=document.createElement('div');
+    d.className='chip num'+(n===listSize?' on':'');
+    d.textContent=Math.min(n,avail);
+    d.onclick=()=>{listSize=n;P.size=n;saveP();paintNextSizes();};
+    c.appendChild(d);
+  });
+}
+function continueRound(){
+  if(!poolFor(theme).length){ openThemes(); return; }
+  start();
+}
+
+/* ══ PHASE D'ÉCRITURE ══
+   Le mot doit être reconstitué. Les tuiles ne contiennent que les
+   lettres DISTINCTES du mot (réutilisables) plus quelques leurres.
+   L'article et la ponctuation sont posés d'avance.                     */
+const ART={
+ de:['der','die','das'],
+ fr:['le','la','les','un','une','des','du',"l'","d'"],
+ en:['the','a','an','to'],
+ es:['el','la','los','las','un','una'],
+ it:['il','lo','la','i','gli','le','un','una',"l'","un'"],
+ pt:['o','a','os','as','um','uma'],
+ ru:[]
+};
+const ALPHA={
+ de:'abcdefghijklmnopqrstuvwxyzäöüß',
+ fr:'abcdefghijklmnopqrstuvwxyzéèêàçôùïû',
+ en:'abcdefghijklmnopqrstuvwxyz',
+ es:'abcdefghijklmnopqrstuvwxyzñáéíóú',
+ it:'abcdefghijklmnopqrstuvwxyzàèéìòù',
+ pt:'abcdefghijklmnopqrstuvwxyzãõçáéíóúâê',
+ ru:'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+};
+let LETTER_RE;
+try{ LETTER_RE=new RegExp('\\p{L}','u'); }
+catch(e){ LETTER_RE=/[A-Za-zÀ-ÖØ-öø-ÿĀ-ſА-Яа-яЁё]/; }
+function isLetter(c){ return LETTER_RE.test(c); }
+
+/* sépare l'article du reste : "l'arbre" -> {art:"l'", rest:"arbre"} */
+function splitArticle(word,lang){
+  const list=ART[lang]||[];
+  const low=word.toLowerCase();
+  for(const a of list){
+    if(a.endsWith("'") && low.startsWith(a))
+      return {art:word.slice(0,a.length), rest:word.slice(a.length)};
+  }
+  const sp=word.indexOf(' ');
+  if(sp>0){
+    const first=low.slice(0,sp);
+    if(list.indexOf(first)>=0)
+      return {art:word.slice(0,sp), rest:word.slice(sp+1)};
+  }
+  return {art:'', rest:word};
+}
+
+let prodRest='', prodArt='', prodFixed=null, prodSlots=[], prodTiles=[];
+function openProd(){
+  if(prodIdx>=prodQueue.length){ showScore(); return; }
+  const k=prodQueue[prodIdx];
+  const entry=ALLW.find(x=>keyOf(x.w)===k);
+  if(!entry){ prodIdx++; return openProd(); }
+  /* on écrit dans la langue APPRISE (celle du mot affiché en jeu),
+     l'invite est donnée dans la langue connue                          */
+  const li=LANGS[P.src].i, ki=LANGS[P.tgt].i;
+  const srcW=entry.w[ki];              /* invite : langue connue */
+  const ipa='';                        /* pas d'indice phonétique ici */
+  const full=entry.w[li];              /* à écrire : langue apprise */
+  const sp=splitArticle(full,P.src);
+  prodArt=sp.art; prodRest=sp.rest;
+  /* expression longue : seul le mot le plus long est à reconstituer,
+     le reste est posé d'avance pour éviter des dizaines de taps       */
+  const nLet=Array.from(prodRest).filter(isLetter).length;
+  if(nLet>12 && prodRest.indexOf(' ')>0){
+    const parts=prodRest.split(' ');
+    let bi=0; parts.forEach((p,i)=>{ if(p.length>parts[bi].length) bi=i; });
+    prodFixed=parts.map((p,i)=>i===bi?null:p);
+    prodRest=parts[bi];
+  } else prodFixed=null;
+  S('prod-src',srcW);
+  S('prod-ipa',(P.phon&&ipa)?'['+ipa+']':'');
+  S('prod-title',T().prodTitle);
+  S('prod-sub',T().prodSub);
+  S('prod-count',(prodIdx+1)+' / '+prodQueue.length);
+  S('b-prod-clear',T().clear);
+  S('b-prod-skip',T().skipProd);
+  buildTiles();
+  document.getElementById('top').classList.remove('hidden');
+  go('p-prod');
+}
+
+function buildTiles(){
+  prodSlots=[];
+  /* lettres distinctes du mot, dans l'ordre d'apparition */
+  const seen=new Set(); const uniq=[];
+  for(const c of prodRest){
+    if(!isLetter(c)) continue;
+    const key=c.toLowerCase();
+    if(seen.has(key)) continue;
+    seen.add(key); uniq.push(c);
+  }
+  /* leurres : lettres absentes du mot, tirées de l'alphabet de la langue */
+  const alpha=(ALPHA[P.src]||ALPHA.en).split('').filter(c=>!seen.has(c));
+  const want=Math.max(3,Math.min(5,9-uniq.length));
+  const decoys=[];
+  for(let i=0;i<want && alpha.length;i++){
+    const j=Math.floor(Math.random()*alpha.length);
+    decoys.push(alpha.splice(j,1)[0]);
+  }
+  /* casse cohérente avec le mot (majuscule allemande conservée) */
+  const upper=uniq.length && uniq[0]===uniq[0].toUpperCase() && uniq[0]!==uniq[0].toLowerCase();
+  prodTiles=uniq.concat(decoys.map(c=>upper?c:c))
+    .sort(()=>Math.random()-.5)
+    .map((c,i)=>({c,i}));
+  renderProd();
+}
+
+function renderProd(){
+  const sl=document.getElementById('prod-slots'); sl.innerHTML='';
+  /* article posé d'avance */
+  if(prodArt){
+    const a=mk('span','fixed',prodArt);
+    sl.appendChild(a);
+    if(!prodArt.endsWith("'")) sl.appendChild(mk('span','gap',''));
+  }
+  /* parties figées avant le mot à écrire */
+  if(prodFixed){
+    let done=false;
+    prodFixed.forEach(p=>{
+      if(p===null){ done=true; return; }
+      if(!done){ sl.appendChild(mk('span','fixed',p)); sl.appendChild(mk('span','gap','')); }
+    });
+  }
+  let li=0;
+  for(const c of prodRest){
+    if(!isLetter(c)){
+      sl.appendChild(mk('span', c===' '?'gap':'fixed', c===' '?'':c));
+      continue;
+    }
+    const filled=prodSlots[li];
+    const d=mk('span','slot'+(filled?' f':''),filled?filled.c:'');
+    const my=li;
+    d.onclick=()=>{ if(prodSlots[my]){ prodSlots[my]=null; renderProd(); } };
+    sl.appendChild(d); li++;
+  }
+  /* parties figées après le mot à écrire */
+  if(prodFixed){
+    let after=false;
+    prodFixed.forEach(p=>{
+      if(p===null){ after=true; return; }
+      if(after){ sl.appendChild(mk('span','gap','')); sl.appendChild(mk('span','fixed',p)); }
+    });
+  }
+  const tl=document.getElementById('prod-tiles'); tl.innerHTML='';
+  prodTiles.forEach(t=>{
+    const d=mk('span','tile',t.c);
+    d.onclick=()=>{
+      const n=countSlots();
+      for(let i=0;i<n;i++) if(!prodSlots[i]){ prodSlots[i]=t; break; }
+      renderProd(); checkProd();
+    };
+    tl.appendChild(d);
+  });
+}
+function countSlots(){ let n=0; for(const c of prodRest) if(isLetter(c)) n++; return n; }
+function mk(tag,cls,txt){const e=document.createElement(tag);e.className=cls;e.textContent=txt;return e;}
+
+function checkProd(){
+  const n=countSlots();
+  for(let i=0;i<n;i++) if(!prodSlots[i]) return;
+  const got=prodSlots.slice(0,n).map(s=>s.c).join('').toLowerCase();
+  const want=Array.from(prodRest).filter(isLetter).join('').toLowerCase();
+  const k=prodQueue[prodIdx], s=st(k);
+  const good=(got===want);
+  const fb=document.getElementById('prod-fb');
+  if(good){
+    s.prod=true; saveP();
+    fb.textContent='✓ '+T().prodOk; fb.className='pfb ok';
+  } else {
+    s.streak=0; s.pf=(s.pf||0)+1; saveP();
+    const shown=prodFixed
+      ? prodFixed.map(p=>p===null?prodRest:p).join(' ')
+      : prodRest;
+    fb.textContent='✗ '+(prodArt?prodArt+(prodArt.endsWith("'")?'':' '):'')+shown;
+    fb.className='pfb no';
+  }
+  setTimeout(()=>{ fb.textContent=''; fb.className='pfb';
+    prodIdx++; openProd(); }, good?750:1800);
+}
+function prodClear(){ prodSlots=[]; renderProd(); }
+function prodSkip(){ prodIdx++; openProd(); }
+
+/* ══ MODALES ══ */
+let modalYes=null;
+function modal(text,btn,fn){
+  S('m-text',text); S('m-yes',btn||T().confirm);
+  modalYes=fn; document.getElementById('m-yes').onclick=fn;
+  document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal').classList.add('hidden');}
+function askQuit(){
+  modal(T().quit+' ?',T().confirm,()=>{closeModal();stop();goHome();});
+}
+function askReset(){
+  modal(T().resetProgress+' ?',T().confirm,()=>{
+    P.known={};P.stat={};P.games=0;P.right=0;P.ans=0;saveP();
+    closeModal();refreshHome();
+  });
+}
+
+function stop(){
+  running=false; window.__dragging=false;
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  live.forEach(m=>{ if(m._detach)try{m._detach()}catch(e){}
+    try{m.el.remove()}catch(e){} });
+  live=[];
+  document.querySelectorAll('.bub,.pop').forEach(e=>e.remove());
+}
+
+/* ══ HAUTEUR D'ÉCRAN (barre Safari mobile, rotation) ══ */
+let VH=window.innerHeight;
+function keyboardOpen(){
+  const a=document.activeElement;
+  return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA'));
+}
+function syncVH(){
+  /* le clavier iOS rétrécit visualViewport : on ignore, sinon la mise en page saute */
+  if(keyboardOpen()) return;
+  const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  VH=h;
+  document.documentElement.style.setProperty('--vh',(h/100)+'px');
+  /* réajuster les mots en cours si l'écran a changé de taille */
+  if(typeof live!=='undefined') live.forEach(m=>{
+    if(m.drag) return;
+    const half=m.el.offsetWidth/2, guard=118;
+    const lo=guard+half+8, hi=window.innerWidth-guard-half-8;
+    if(hi>lo){
+      const cx=Math.max(lo,Math.min(hi,parseFloat(m.el.style.left)||window.innerWidth/2));
+      m.el.style.left=cx+'px';
+    }
+    m.vy=(VH-84)/(SPEEDS[spd].v*1000);
+  });
+}
+syncVH();
+window.addEventListener('resize',syncVH);
+window.addEventListener('orientationchange',()=>setTimeout(syncVH,250));
+if(window.visualViewport) window.visualViewport.addEventListener('resize',syncVH);
+
+/* ══ Empêcher le rebond élastique et le zoom accidentel ══ */
+/* Le blocage du défilement ne s'applique QUE pendant le glissement d'un mot.
+   Auparavant il s'appliquait partout et pouvait annuler un appui sur les
+   boutons de la barre du haut si le doigt bougeait d'un pixel.            */
+window.__dragging=false;
+document.addEventListener('touchmove',function(e){
+  if(!window.__dragging) return;
+  if(e.cancelable) e.preventDefault();
+},{passive:false});
+document.addEventListener('gesturestart',function(e){ e.preventDefault(); });
+
+/* ══ INIT ══ */
+(function(){
+  /* 1) LIER LE BOUTON EN PREMIER : même si l'affichage échoue, il reste utilisable */
+  const inp=document.getElementById('name-in');
+  /* bouton d'accueil : appui fiable même si le doigt bouge légèrement */
+  let lastHome=0;
+  function homeTap(e){
+    if(e&&e.cancelable) e.preventDefault();
+    const n=Date.now(); if(n-lastHome<400) return; lastHome=n;
+    goHome();
+  }
+  const th=document.getElementById('t-home');
+  if(th){
+    th.onclick=null;
+    th.addEventListener('click',homeTap);
+    th.addEventListener('touchend',homeTap,{passive:false});
+  }
+  const be=document.getElementById('b-enter');
+  if(be){
+    be.addEventListener('click',enterProfile);
+    be.addEventListener('touchend',function(e){
+      if(e.cancelable)e.preventDefault(); enterProfile(); },{passive:false});
+  }
+  if(inp){
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.keyCode===13){ e.preventDefault(); enterProfile(); } });
+    inp.addEventListener('focus',function(){
+      setTimeout(function(){ try{ inp.scrollIntoView({block:'center'}); }catch(_){} },300); });
+    inp.addEventListener('blur',function(){ setTimeout(syncVH,300); });
+  }
+  /* 2) puis le reste, sous protection */
+ try{
+  const b=(navigator.language||'fr').slice(0,2).toLowerCase();
+  if(I18N[b]) ui=b;
+  if(memDB.last&&memDB.profiles[memDB.last]){
+    const p=memDB.profiles[memDB.last];
+    ui=p.ui||ui;
+    if(inp) inp.value=p.name;
+  }
+  paintAll();
+  syncVH();
+ }catch(err){
+  if(window.__lexioErr) window.__lexioErr('init: '+(err&&err.message?err.message:err));
+ }
+})();
+</script>
+</body>
+</html>
