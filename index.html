@@ -271,6 +271,17 @@ input[type=text]::placeholder{color:var(--faint);font-weight:400}
 .pfb{min-height:28px;font-size:1.02rem;font-weight:700;text-align:center;
   padding:0 10px;word-break:break-word}
 .pfb.ok{color:var(--ok)} .pfb.no{color:var(--no)}
+
+/* tableau de prononciation */
+.prontab{width:96vw;max-width:620px;display:flex;flex-direction:column;gap:6px}
+.pr{display:flex;gap:10px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pr .a{flex:0 0 78px;font-weight:700;font-size:.95rem;color:var(--accent);
+  word-break:break-word}
+.pr .b{flex:1;min-width:0}
+.pr .b1{font-size:.87rem;line-height:1.4}
+.pr .b2{font-size:.78rem;color:var(--faint);margin-top:3px;font-style:italic;
+  word-break:break-word}
 </style>
 </head>
 <body>
@@ -370,6 +381,9 @@ input[type=text]::placeholder{color:var(--faint);font-weight:400}
     <span id="pv-nat"></span><span style="color:var(--faint)">→</span><span id="pv-lrn"></span>
   </div>
   <div class="tiny" id="phon-warn"></div>
+  <div class="row" style="margin:8px 0 0">
+    <button class="btn btn-ghost btn-sm" onclick="openPron()" id="b-pron-see"></button>
+  </div>
   <div class="row" style="margin:8px 0 18px">
     <button class="btn btn-ghost btn-sm" onclick="goHome()" id="b-lrn-back"></button>
     <button class="btn btn-primary" onclick="goHome()" id="b-lrn-next"></button>
@@ -445,6 +459,16 @@ input[type=text]::placeholder{color:var(--faint);font-weight:400}
   </div>
 </div>
 
+<!-- PRONONCIATION -->
+<div class="screen hidden top" id="p-pron">
+  <h2 id="t-pron"></h2>
+  <div class="tiny" id="pron-note"></div>
+  <div class="prontab" id="pron-tab"></div>
+  <div class="row" style="margin:10px 0 20px">
+    <button class="btn btn-primary" onclick="closePron()" id="b-pron-ok"></button>
+  </div>
+</div>
+
 <!-- RÉGLAGES -->
 <div class="screen hidden top" id="p-set">
   <h2 id="ttl-set"></h2>
@@ -468,6 +492,9 @@ input[type=text]::placeholder{color:var(--faint);font-weight:400}
   <div class="eyebrow" id="l-isz"></div>
   <div class="chips" id="set-ipa"></div>
 
+  <div class="row" style="margin:4px 0">
+    <button class="btn btn-ghost btn-sm" onclick="openPron()" id="b-pron-see2"></button>
+  </div>
   <div class="tog" id="tog-both2" onclick="togBoth()"><div class="sw"></div><span id="l-both2"></span></div>
   <div class="tog" id="tog-rev" onclick="togRevise()"><div class="sw"></div><span id="l-rev"></span></div>
   <div class="tiny" id="h-rev"></div>
@@ -614,7 +641,8 @@ fr:{
  listSize:"Mots par liste",
  noWorst:"Aucun point faible pour l'instant.",
  errs:"erreurs",
- liveEdit:"Modifiable en cours de partie"
+ liveEdit:"Modifiable en cours de partie",
+ pronGuide:"Guide de prononciation"
 },
 en:{
  name:"English", flag:"🇬🇧",
@@ -717,7 +745,8 @@ en:{
  listSize:"Words per list",
  noWorst:"No weak spots yet.",
  errs:"mistakes",
- liveEdit:"Can be changed during a round"
+ liveEdit:"Can be changed during a round",
+ pronGuide:"Pronunciation guide"
 },
 de:{
  name:"Deutsch", flag:"🇩🇪",
@@ -820,7 +849,8 @@ de:{
  listSize:"Wörter pro Liste",
  noWorst:"Noch keine Schwachstellen.",
  errs:"Fehler",
- liveEdit:"Während der Runde änderbar"
+ liveEdit:"Während der Runde änderbar",
+ pronGuide:"Aussprache-Leitfaden"
 },
 es:{
  name:"Español", flag:"🇪🇸",
@@ -923,7 +953,8 @@ es:{
  listSize:"Palabras por lista",
  noWorst:"Aún no hay puntos débiles.",
  errs:"errores",
- liveEdit:"Modificable durante la ronda"
+ liveEdit:"Modificable durante la ronda",
+ pronGuide:"Guía de pronunciación"
 },
 it:{
  name:"Italiano", flag:"🇮🇹",
@@ -1026,7 +1057,8 @@ it:{
  listSize:"Parole per lista",
  noWorst:"Ancora nessun punto debole.",
  errs:"errori",
- liveEdit:"Modificabile durante il turno"
+ liveEdit:"Modificabile durante il turno",
+ pronGuide:"Guida alla pronuncia"
 },
 ru:{
  name:"Русский", flag:"🇷🇺",
@@ -1129,7 +1161,8 @@ ru:{
  listSize:"Слов в списке",
  noWorst:"Пока нет слабых мест.",
  errs:"ошибок",
- liveEdit:"Можно менять во время раунда"
+ liveEdit:"Можно менять во время раунда",
+ pronGuide:"Руководство по произношению"
 },
 pt:{
  name:"Português", flag:"🇵🇹",
@@ -1232,7 +1265,8 @@ pt:{
  listSize:"Palavras por lista",
  noWorst:"Ainda sem pontos fracos.",
  errs:"erros",
- liveEdit:"Alterável durante a ronda"
+ liveEdit:"Alterável durante a ronda",
+ pronGuide:"Guia de pronúncia"
 }
 };
 
@@ -1258,9 +1292,122 @@ const THEME_I18N = {
  adjectifs:  {fr:"Adjectifs",en:"Adjectives",de:"Adjektive",es:"Adjetivos",it:"Aggettivi",ru:"Прилагательные",pt:"Adjetivos"}
 };
 
+/* Guides de lecture par langue.
+   Chaque entrée : [ce qui est écrit, comment ça se lit, exemple] */
+const PRON = {
+ cha:{note:"Le charolais s'écrit comme il se prononce. Deux sons le distinguent nettement du français.",
+  rows:[
+   ["ts","le « ch » français","l'tsat = le chat · la vâtse = la vache"],
+   ["dz","le « j » français","l'dzardin = le jardin · la nédze = la neige"],
+   ["â","a long, en arrière de la bouche","la câve · l'brâs"],
+   ["eû / û","« eu » fermé, tendu","l'feû = le feu · la seûr = la sœur"],
+   ["-iau","remplace le « -eau » français","l'mantiau · l'bâtiau · la piau"],
+   ["-â (verbes)","infinitif en -er","alâ = aller · expliquâ = expliquer"],
+   ["-î (verbes)","infinitif en -ir","dormî = dormir · aidî = aider"],
+   ["l'","« le » devant consonne","l'tsin = le chien · l'pon = le pont"],
+   ["-in","plus ouvert qu'en français","l'trin = le train"],
+  ]},
+ bre:{note:"Le breton s'accentue sur l'avant-dernière syllabe. Attention au c'h, propre à la langue.",
+  rows:[
+   ["c'h","souffle guttural, comme la jota espagnole","ar c'hi = le chien · ar c'hazh = le chat"],
+   ["ch","le « ch » français","ar chupenn = la veste"],
+   ["gw","« gou- »","ar gwenanenn = l'abeille"],
+   ["ñ","nasalise la voyelle qui précède, sans se prononcer","evañ = boire"],
+   ["z final","souvent muet dans le breton du Léon et de Cornouaille","ar c'hazh se dit « ar c'ha »"],
+   ["ao","« ô »","an aod = la plage"],
+   ["eu","« eu » français","ar breur = le frère"],
+   ["v final","tend vers « o » ou « w »","glav = la pluie, se dit « glaw »"],
+   ["accent","sur l'avant-dernière syllabe","LA-bous, GWE-nan-enn"],
+  ]},
+ svk:{note:"Le slovaque s'accentue TOUJOURS sur la première syllabe, quelle que soit la longueur du mot.",
+  rows:[
+   ["accent","toujours sur la 1re syllabe","NA-ro-de-ni-ny = anniversaire"],
+   ["á é í ó ú ý","voyelles longues, tenues deux fois plus","stará mama = la grand-mère"],
+   ["č","« tch »","čítať = lire"],
+   ["š","« ch » français","škola = l'école"],
+   ["ž","« j » français","žiak = l'élève"],
+   ["c","« ts »","cesnak = l'ail"],
+   ["ch","souffle guttural (une seule lettre en slovaque)","chlieb = le pain"],
+   ["dž","« dj »","džús = le jus"],
+   ["ď ť ň ľ","mouillés : di, ti, ni, li appuyés","ľad = la glace"],
+   ["j","« y »","jeseň = l'automne"],
+   ["h","aspiré, réellement prononcé","hora = la montagne"],
+   ["r, l","peuvent porter la syllabe, sans voyelle","vlk = le loup · prst = le doigt"],
+  ]},
+ vor:{note:"Alémanique du Vorarlberg. Proche de l'allemand, mais avec des voyelles plus fermées et un ch omniprésent.",
+  rows:[
+   ["ch","souffle guttural en fin de mot, plus doux après i/e","d Khuchi = la cuisine"],
+   ["-a final","« e » très atone","d Katz, d Suppa"],
+   ["ü ö","comme en allemand : lèvres arrondies","d Brilla, s Gschäft"],
+   ["sch","« ch » français","s Gschäft = le magasin"],
+   ["st- sp-","« cht- », « chp- » en début de mot","dr Stuahl = la chaise"],
+   ["ua / ia","diphtongues typiques","dr Stuahl · s Tier"],
+   ["dr / d / s","les articles : le / la / le neutre","dr Hund, d Katz, s Huus"],
+  ]},
+ plt:{note:"Francique mosellan. Langue germanique, notée ici dans une graphie proche du luxembourgeois.",
+  rows:[
+   ["ch","souffle guttural","d'Kichen = la cuisine"],
+   ["ë","« e » sourd, entre e et eu","d'Fënster = la fenêtre"],
+   ["ee / oo / ii","voyelles longues","de Kéis = le fromage"],
+   ["é","« é » fermé","de Séi = le lac"],
+   ["éi / ou","diphtongues","de Schnéi = la neige"],
+   ["d' / de / den","les articles","d'Haus, de Bam, den Hond"],
+   ["sch","« ch » français","d'Schoul = l'école"],
+   ["z","« ts »","d'Zäit = le temps"],
+  ]},
+ sv:{note:"Espagnol du Salvador. La grammaire diffère plus que le vocabulaire : on dit vos, pas tú.",
+  rows:[
+   ["vos","remplace « tú » ; le verbe change","vos tenés, vos comés, vos sos"],
+   ["c / z","toujours « s » (seseo), jamais le « th » d'Espagne","cerdo se dit « serdo »"],
+   ["s en fin de syllabe","aspiré ou avalé","las casas → « lah casah »"],
+   ["ll / y","« y » de yaourt","la calle → « la caye »"],
+   ["j / g (e,i)","souffle léger, plus doux qu'en Espagne","el ajo, la jirafa"],
+   ["ñ","« gn » français","el niño = l'enfant"],
+   ["h","toujours muet","el huevo = l'œuf"],
+   ["r initial / rr","roulé, appuyé","el perro = le chien"],
+  ]},
+ qc:{note:"Français du Québec. Le vocabulaire diffère peu ; c'est l'accent qui change.",
+  rows:[
+   ["ti / di","deviennent « tsi » et « dzi »","tu dis → « tsu dzi »"],
+   ["voyelles longues","se diphtonguent","père → « paère » · fête → « faète »"],
+   ["a final","tire vers « â » ou « ô »","Canada → « Canadâ »"],
+   ["oi","parfois « oé » en registre familier","moi → « moé » · toi → « toé »"],
+   ["consonnes finales","souvent maintenues","il fait frette (= froid)"],
+   ["vocabulaire","une vingtaine de mots seulement diffèrent","le char, la tuque, le soulier, la job"],
+  ]},
+ en:{note:"Anglais britannique. L'orthographe ne dit presque rien de la prononciation : à écouter plus qu'à lire.",
+  rows:[
+   ["th","langue entre les dents, sourd ou sonore","the (sonore) · three (sourd)"],
+   ["-ough","au moins six lectures différentes","through, though, tough, thought"],
+   ["accent","peut changer le sens","PREsent (cadeau) / preSENT (présenter)"],
+   ["voyelles atones","se réduisent à un « e » sourd","banana → « be-NA-ne »"],
+   ["r final","muet en anglais britannique","water → « wo-te »"],
+  ]},
+ fr:{note:"Français de référence.",
+  rows:[
+   ["consonnes finales","le plus souvent muettes","grand, petit, trois"],
+   ["-ent (verbes)","muet à la 3e personne du pluriel","ils parlent"],
+   ["liaison","la consonne muette se réveille devant une voyelle","les_amis, un_enfant"],
+   ["u","lèvres arrondies, langue en avant","la rue, la lune"],
+   ["nasales","an, in, on, un : l'air passe par le nez","le pain, le pont"],
+  ]},
+};
+
 </script>
 <script>
 const LEVEL="beginner";
+const APPID="beginner";
+const LANGS={
+ de:{n:"Deutsch",  f:"🇩🇪", i:0,  ui:'de'},
+ fr:{n:"Français", f:"🇫🇷", i:2,  ui:'fr'},
+ en:{n:"English",  f:"🇬🇧", i:4,  ui:'en'},
+ it:{n:"Italiano", f:"🇮🇹", i:6,  ui:'it'},
+ ru:{n:"Русский",  f:"🇷🇺", i:8,  ui:'ru'},
+ es:{n:"Español",  f:"🇪🇸", i:10, ui:'es'},
+ pt:{n:"Português",f:"🇵🇹", i:12, ui:'pt'}
+};
+const PHON_OK=['de','fr','es','it'];
+
 const VOCAB={"animaux":{"icon":"🐾","sets":[[["das Pferd","das pfeːɐt","le cheval","lə ʃəval","the horse","ðə hɔːs","il cavallo","il kaˈvallo","лошадь","ˈloʂətʲ","el caballo","el kaˈβaʎo","o cavalo","u kaˈvalu"],["das Schwein","das ʃvaɪn","le cochon","lə kɔʃɔ̃","the pig","ðə pɪɡ","il maiale","il maˈjaːle","свинья","svʲɪˈnʲja","el cerdo","el ˈθeɾðo","o porco","u ˈpoɾku"],["der Adler","deːɐ ˈaːdlɐ","l'aigle","lɛɡl","the eagle","ði ˈiːɡl","l'aquila","ˈlaːkwila","орёл","ɐˈrʲol","el águila","el ˈaɣila","a águia","ɐ ˈaɡjɐ"],["der Affe","deːɐ ˈafə","le singe","lə sɛ̃ʒ","the monkey","ðə ˈmʌŋki","la scimmia","la ˈʃimmja","обезьяна","ɐbʲɪˈzʲjanə","el mono","el ˈmono","o macaco","u mɐˈkaku"],["der Bär","deːɐ bɛːɐ","l'ours","luʁ","the bear","ðə beə","l'orso","ˈlorso","медведь","mʲɪdˈvʲetʲ","el oso","el ˈoso","o urso","u ˈuɾsu"],["der Fisch","deːɐ fɪʃ","le poisson","lə pwasɔ̃","the fish","ðə fɪʃ","il pesce","il ˈpeʃʃe","рыба","ˈrɨbə","el pez","el peθ","o peixe","u ˈpejʃə"],["der Frosch","deːɐ frɔʃ","la grenouille","la ɡʁənwj","the frog","ðə frɒɡ","la rana","la ˈraːna","лягушка","lʲɪˈɡuʂkə","la rana","la ˈrana","a rã","ɐ ˈʁɐ̃"],["der Fuchs","deːɐ fʊks","le renard","lə ʁənaʁ","the fox","ðə fɒks","la volpe","la ˈvolpe","лиса","lʲɪˈsa","el zorro","el ˈθoro","a raposa","ɐ ʁɐˈpozɐ"]],[["der Hase","deːɐ ˈhaːzə","le lièvre","lə ljɛvʁ","the hare","ðə heə","la lepre","la ˈlɛːpre","заяц","ˈzajɪts","la liebre","la ˈljeβɾe","a lebre","ɐ ˈlɛbɾə"],["der Hund","deːɐ hʊnt","le chien","lə ʃjɑ̃","the dog","ðə dɒɡ","il cane","il ˈkaːne","собака","sɐˈbakə","el perro","el ˈpero","o cão","u ˈkɐ̃w"],["der Igel","deːɐ ˈiːɡəl","le hérisson","lə eʁisɔ̃","the hedgehog","ðə ˈhedʒhɒɡ","il riccio","il ˈrittʃo","ёж","joʂ","el erizo","el eˈɾiθo","o ouriço","u oˈɾisu"],["der Löwe","deːɐ ˈløːvə","le lion","lə ljɔ̃","the lion","ðə ˈlaɪən","il leone","il leˈoːne","лев","lʲef","el león","el leˈon","o leão","u liˈɐ̃w"],["der Vogel","deːɐ ˈfoːɡəl","l'oiseau","lwazo","the bird","ðə bɜːd","l'uccello","lutˈtʃɛllo","птица","ˈptitsə","el pájaro","el ˈpaxaɾo","o pássaro","u ˈpasaɾu"],["der Wolf","deːɐ vɔlf","le loup","lə lu","the wolf","ðə wʊlf","il lupo","il ˈluːpo","волк","volk","el lobo","el ˈloβo","o lobo","u ˈloβu"],["die Biene","diː ˈbiːnə","l'abeille","labɛl","the bee","ðə biː","l'ape","ˈlaːpe","пчела","ptɕɪˈla","la abeja","la aˈβexa","a abelha","ɐ ɐˈβeʎɐ"],["die Ente","diː ˈɛntə","le canard","lə kanaʁ","the duck","ðə dʌk","l'anatra","ˈlaːnatra","утка","ˈutkə","el pato","el ˈpato","o pato","u ˈpatu"]],[["die Fledermaus","diː ˈfleːdɐmaʊs","la chauve-souris","la ʃov suʁi","the bat","ðə bæt","il pipistrello","il pipiˈstrɛllo","летучая мышь","lʲɪˈtutɕɪjə mɨʂ","el murciélago","el muɾˈθjelaɣo","o morcego","u muɾˈseɣu"],["die Giraffe","diː ɡiˈrafə","la girafe","la ʒiʁaf","the giraffe","ðə dʒɪˈrɑːf","la giraffa","la dʒiˈraffa","жираф","ʐɨˈraf","la jirafa","la xiˈɾafa","a girafa","ɐ ʒiˈɾafɐ"],["die Katze","diː ˈkatsə","le chat","lə ʃa","the cat","ðə kæt","il gatto","il ˈɡatto","кошка","ˈkoʂkə","el gato","el ˈɡato","o gato","u ˈɡatu"],["die Kuh","diː kuː","la vache","la vaʃ","the cow","ðə kaʊ","la mucca","la ˈmukka","корова","kɐˈrovə","la vaca","la ˈbaka","a vaca","ɐ ˈvakɐ"],["die Maus","diː maʊs","la souris","la suʁi","the mouse","ðə maʊs","il topo","il ˈtɔːpo","мышь","mɨʂ","el ratón","el raˈton","o rato","u ˈʁatu"],["die Schlange","diː ˈʃlaŋə","le serpent","lə sɛʁpɑ̃","the snake","ðə sneɪk","il serpente","il serˈpɛnte","змея","zmʲɪˈja","la serpiente","la seɾˈpjente","a cobra","ɐ ˈkɔβɾɐ"],["die Spinne","diː ˈʃpɪnə","l'araignée","laʁɛɲe","the spider","ðə ˈspaɪdə","il ragno","il ˈraɲɲo","паук","pɐˈuk","la araña","la aˈɾaɲa","a aranha","ɐ ɐˈɾɐɲɐ"],["das Tier","das tiːɐ","l'animal","lanimal","animal","","animale","aniˈmaːle","животное","","animal","aniˈmal","animal",""]]]},"nourriture":{"icon":"🍎","sets":[[["das Brot","das broːt","le pain","lə pɛ̃","the bread","ðə bred","il pane","il ˈpaːne","хлеб","xlʲep","el pan","el pan","o pão","u ˈpɐ̃w"],["das Ei","das aɪ","l'œuf","lœyf","the egg","ði eɡ","l'uovo","ˈlwɔːvo","яйцо","jɪjˈtso","el huevo","el ˈweβo","o ovo","u ˈovu"],["das Fleisch","das flaɪʃ","la viande","la vjɑ̃d","the meat","ðə miːt","la carne","la ˈkarne","мясо","ˈmʲasə","la carne","la ˈkaɾne","a carne","ɐ ˈkaɾnə"],["das Gemüse","das ɡəˈmyːzə","les légumes","le leɡymɛ","the vegetables","ðə ˈvedʒtəblz","la verdura","la verˈduːra","овощи","ˈovəɕɕɪ","las verduras","las beɾˈðuɾas","os legumes","uʒ lɨˈɡumɨʃ"],["das Mehl","das meːl","la farine","la faʁin","the flour","ðə ˈflaʊə","la farina","la faˈriːna","мука","mʊˈka","la harina","la aˈɾina","a farinha","ɐ fɐˈɾiɲɐ"],["das Wasser","das ˈvasɐ","l'eau","lo","the water","ðə ˈwɔːtə","l'acqua","ˈlakkwa","вода","vɐˈda","el agua","el ˈaɣwa","a água","ɐ ˈaɡwɐ"],["der Apfel","deːɐ ˈapfəl","la pomme","la pɔm","the apple","ði ˈæpl","la mela","la ˈmeːla","яблоко","ˈjabləkə","la manzana","la manˈθana","a maçã","ɐ mɐˈsɐ̃"],["der Essig","deːɐ ˈɛsɪç","le vinaigre","lə vinɛɡʁ","the vinegar","ðə ˈvɪnɪɡə","l'aceto","laˈtʃeːto","уксус","ˈuksʊs","el vinagre","el biˈnaɣɾe","o vinagre","u viˈnaɣɾə"]],[["der Knoblauch","deːɐ ˈknoːplaʊx","l'ail","lɛl","the garlic","ðə ˈɡɑːlɪk","l'aglio","ˈlaʎʎo","чеснок","tɕɪsˈnok","el ajo","el ˈaxo","o alho","u ˈaʎu"],["der Kuchen","deːɐ ˈkuːxən","le gâteau","lə ɡɑto","the cake","ðə keɪk","la torta","la ˈtorta","торт","tort","el pastel","el pasˈtel","o bolo","u ˈbolu"],["der Käse","deːɐ ˈkɛːzə","le fromage","lə fʁɔmaʒ","the cheese","ðə tʃiːz","il formaggio","il forˈmaddʒo","сыр","sɨr","el queso","el ˈkeso","o queijo","u ˈkejʒu"],["der Pfeffer","deːɐ ˈpfɛfɐ","le poivre","lə pwavʁ","the pepper","ðə ˈpepə","il pepe","il ˈpeːpe","перец","ˈpʲerʲɪts","la pimienta","la piˈmjenta","a pimenta","ɐ piˈmẽtɐ"],["der Saft","deːɐ zaft","le jus","lə ʒy","the juice","ðə dʒuːs","il succo","il ˈsukko","сок","sok","el zumo","el ˈθumo","o sumo","u ˈsumu"],["der Schinken","deːɐ ˈʃɪŋkən","le jambon","lə ʒɑ̃bɔ̃","the ham","ðə hæm","il prosciutto","il proʃˈʃutto","ветчина","vʲɪtɕːɪˈna","el jamón","el xaˈmon","o presunto","u pɾɨˈzũtu"],["der Spinat","deːɐ ʃpiˈnaːt","les épinards","le epinaʁd","the spinach","ðə ˈspɪnɪtʃ","gli spinaci","ʎi spiˈnaːtʃi","шпинат","ʂpʲɪˈnat","las espinacas","las espiˈnakas","os espinafres","uz ɨʃpiˈnafɾɨʃ"],["die Banane","diː baˈnaːnə","la banane","la banan","the banana","ðə bəˈnɑːnə","la banana","la baˈnaːna","банан","bɐˈnan","el plátano","el ˈplatano","a banana","ɐ bɐˈnɐnɐ"]],[["die Butter","diː ˈbʊtɐ","le beurre","lə bœʁ","the butter","ðə ˈbʌtə","il burro","il ˈburro","масло","ˈmaslə","la mantequilla","la manteˈkiʎa","a manteiga","ɐ mɐ̃ˈtɐjɡɐ"],["die Erdbeere","diː ˈeːɐtbeːʁə","la fraise","la fʁɛz","the strawberry","ðə ˈstrɔːbəri","la fragola","la ˈfraːɡola","клубника","klʊbˈnʲikə","la fresa","la ˈfɾesa","o morango","u muˈɾɐ̃ɡu"],["die Kartoffel","diː kaʁˈtɔfəl","la pomme de terre","la pɔm də tɛʁ","the potato","ðə pəˈteɪtəʊ","la patata","la paˈtaːta","картофель","kɐrˈtofʲɪlʲ","la patata","la paˈtata","a batata","ɐ bɐˈtatɐ"],["die Milch","diː mɪlç","le lait","lə lɛ","the milk","ðə mɪlk","il latte","il ˈlatte","молоко","məlɐˈko","la leche","la ˈletʃe","o leite","u ˈlejtə"],["die Sahne","diː ˈzaːnə","la crème","la kʁɛm","the cream","ðə kriːm","la panna","la ˈpanna","сливки","ˈslʲifkʲɪ","la nata","la ˈnata","a nata","ɐ ˈnatɐ"],["die Suppe","diː ˈzʊpə","la soupe","la sup","the soup","ðə suːp","la zuppa","la ˈtsuppa","суп","sup","la sopa","la ˈsopa","a sopa","ɐ ˈsopɐ"],["die Zwiebel","diː ˈtsviːbəl","l'oignon","lwaɲɔ̃","the onion","ði ˈʌnjən","la cipolla","la tʃiˈpolla","лук","luk","la cebolla","la θeˈβoʎa","a cebola","ɐ sɨˈbolɐ"]]]},"famille":{"icon":"👪","sets":[[["das Baby","das ˈbeːbi","le bébé","lə bebe","the baby","ðə ˈbeɪbi","il neonato","il neoˈnaːto","младенец","mlɐˈdʲenʲɪts","el bebé","el beˈβe","o bebé","u bɨˈbɛ"],["das Kind","das kɪnt","l'enfant","lɑ̃fɑ̃","the child","ðə tʃaɪld","il bambino","il bamˈbiːno","ребёнок","rʲɪˈbʲonək","el niño","el ˈniɲo","a criança","ɐ kɾiˈɐ̃sɐ"],["das Patenkind","das ˈpaːtənkɪnt","le filleul","lə fijœl","the godchild","ðə ˈɡɒdtʃaɪld","il figlioccio","il fiʎˈʎɔttʃo","крестник","ˈkrʲesnʲɪk","el ahijado","el aiˈxaðo","o afilhado","u ɐfiˈʎadu"],["der Bruder","deːɐ ˈbruːdɐ","le frère","lə fʁɛʁ","the brother","ðə ˈbrʌðə","il fratello","il fraˈtɛllo","брат","brat","el hermano","el eɾˈmano","o irmão","u iɾˈmɐ̃w"],["der Cousin","deːɐ kuˈzɛ̃ː","le cousin","lə kuzɛ̃","the cousin","ðə ˈkʌzn","il cugino","il kuˈdʒiːno","двоюродный брат","dvɐˈjurədnɨj brat","el primo","el ˈpɾimo","o primo","u ˈpɾimu"],["der Enkel","deːɐ ˈɛŋkəl","le petit-fils","lə pəti fis","the grandson","ðə ˈɡrænsʌn","il nipote","il niˈpoːte","внук","vnuk","el nieto","el ˈnjeto","o neto","u ˈnetu"],["der Neffe","deːɐ ˈnɛfə","le neveu","lə nəvø","the nephew","ðə ˈnefjuː","il nipote","il niˈpoːte","племянник","plʲɪˈmʲanʲːɪk","el sobrino","el soˈβɾino","o sobrinho","u suˈbɾiɲu"],["der Onkel","deːɐ ˈɔŋkəl","l'oncle","lɔ̃kl","the uncle","ði ˈʌŋkl","lo zio","lo ˈtsiːo","дядя","ˈdʲadʲə","el tío","el ˈtio","o tio","u ˈtiu"]],[["der Opa","deːɐ ˈoːpa","le grand-père","lə ɡʁɑ̃ pɛʁ","the grandfather","ðə ˈɡrænfɑːðə","il nonno","il ˈnɔnno","дедушка","ˈdʲedʊʂkə","el abuelo","el aˈβwelo","o avô","u ɐˈvo"],["der Schwager","deːɐ ˈʃvaːɡɐ","le beau-frère","lə bo fʁɛʁ","the brother-in-law","ðə ˈbrʌðərɪnlɔː","il cognato","il koɲˈɲaːto","шурин","ˈʂurʲɪn","el cuñado","el kuˈɲaðo","o cunhado","u kuˈɲadu"],["der Vater","deːɐ ˈfaːtɐ","le père","lə pɛʁ","the father","ðə ˈfɑːðə","il padre","il ˈpaːdre","отец","ɐˈtʲets","el padre","el ˈpaðɾe","o pai","u ˈpaj"],["der Zwilling","deːɐ ˈtsvɪlɪŋ","le jumeau","lə ʒymo","the twin","ðə twɪn","il gemello","il dʒeˈmɛllo","близнец","blʲɪzˈnʲets","el gemelo","el xeˈmelo","o gémeo","u ˈʒɛmju"],["die Ehe","diː ˈeːə","le mariage","lə maʁjaʒ","the marriage","ðə ˈmærɪdʒ","il matrimonio","il matriˈmɔːnjo","брак","brak","el matrimonio","el matɾiˈmonjo","o casamento","u kɐzɐˈmẽtu"],["die Eltern","diː ˈɛltɐn","les parents","le paʁɑ̃t","the parents","ðə ˈpeərənts","i genitori","i dʒeniˈtoːri","родители","rɐˈdʲitʲɪlʲɪ","los padres","los ˈpaðɾes","os pais","uʃ ˈpajʃ"],["die Enkelin","diː ˈɛŋkəlɪn","la petite-fille","la pətit fij","the granddaughter","ðə ˈɡrændɔːtə","la nipotina","la nipoˈtiːna","внучка","ˈvnutɕkə","la nieta","la ˈnjeta","a neta","ɐ ˈnetɐ"],["die Familie","diː faˈmiːliə","la famille","la famij","the family","ðə ˈfæməli","la famiglia","la faˈmiʎʎa","семья","sʲɪˈmʲja","la familia","la faˈmilja","a família","ɐ fɐˈmiljɐ"]],[["die Mutter","diː ˈmʊtɐ","la mère","la mɛʁ","the mother","ðə ˈmʌðə","la madre","la ˈmaːdre","мать","matʲ","la madre","la ˈmaðɾe","a mãe","ɐ ˈmɐ̃j"],["die Nichte","diː ˈnɪçtə","la nièce","la njɛs","the niece","ðə niːs","la nipote","la niˈpoːte","племянница","plʲɪˈmʲanʲːɪtsə","la sobrina","la soˈβɾina","a sobrinha","ɐ suˈbɾiɲɐ"],["die Oma","diː ˈoːma","la grand-mère","la ɡʁɑ̃ mɛʁ","the grandmother","ðə ˈɡrænmʌðə","la nonna","la ˈnɔnna","бабушка","ˈbabʊʂkə","la abuela","la aˈβwela","a avó","ɐ ɐˈvɔ"],["die Schwester","diː ˈʃvɛstɐ","la sœur","la sœyʁ","the sister","ðə ˈsɪstə","la sorella","la soˈrɛlla","сестра","sʲɪsˈtra","la hermana","la eɾˈmana","a irmã","ɐ iɾˈmɐ̃"],["die Tante","diː ˈtantə","la tante","la tɑ̃t","the aunt","ði ɑːnt","la zia","la ˈtsiːa","тётя","ˈtʲɵtʲə","la tía","la ˈtia","a tia","ɐ ˈtiɐ"],["die Witwe","diː ˈvɪtvə","la veuve","la vœv","the widow","ðə ˈwɪdəʊ","la vedova","la ˈveːdova","вдова","vdɐˈva","la viuda","la ˈbjuða","a viúva","ɐ viˈuvɐ"]]]},"corps":{"icon":"🖐","sets":[[["das Auge","das ˈaʊɡə","l'œil","lœj","the eye","ði aɪ","l'occhio","ˈlɔkkjo","глаз","ɡlas","el ojo","el ˈoxo","o olho","u ˈoʎu"],["das Bein","das baɪn","la jambe","la ʒɑ̃b","the leg","ðə leɡ","la gamba","la ˈɡamba","нога","nɐˈɡa","la pierna","la ˈpjeɾna","a perna","ɐ ˈpɛɾnɐ"],["das Haar","das haːɐ","les cheveux","le ʃəvœ","the hair","ðə heə","i capelli","i kaˈpelli","волосы","ˈvoləsɨ","el pelo","el ˈpelo","o cabelo","u kɐˈbelu"],["das Herz","das hɛʁts","le cœur","lə kœyʁ","the heart","ðə hɑːt","il cuore","il ˈkwɔːre","сердце","ˈsʲertsə","el corazón","el koɾaˈθon","o coração","u kuɾɐˈsɐ̃w"],["das Knie","das kniː","le genou","lə ʒənu","the knee","ðə niː","il ginocchio","il dʒiˈnɔkkjo","колено","kɐˈlʲenə","la rodilla","la roˈðiʎa","o joelho","u ʒuˈeʎu"],["das Ohr","das oːɐ","l'oreille","lɔʁɛl","the ear","ði ɪə","l'orecchio","loˈrekkjo","ухо","ˈuxə","la oreja","la oˈɾexa","a orelha","ɐ oˈɾeʎɐ"],["der Arm","deːɐ aʁm","le bras","lə bʁa","the arm","ði ɑːm","il braccio","il ˈbrattʃo","рука","rʊˈka","el brazo","el ˈbɾaθo","o braço","u ˈbɾasu"],["der Bauch","deːɐ baʊx","le ventre","lə vɑ̃tʁ","the belly","ðə ˈbeli","la pancia","la ˈpantʃa","живот","ʐɨˈvot","la barriga","la baˈriɣa","a barriga","ɐ bɐˈʁiɡɐ"]],[["der Finger","deːɐ ˈfɪŋɐ","le doigt","lə dwaɡ","the finger","ðə ˈfɪŋɡə","il dito","il ˈdiːto","палец","ˈpalʲɪts","el dedo","el ˈdeðo","o dedo","u ˈdedu"],["der Fuß","deːɐ fuːs","le pied","lə pjɛ","the foot","ðə fʊt","il piede","il ˈpjɛːde","нога","nɐˈɡa","el pie","el pje","o pé","u pɛ"],["der Hals","deːɐ hals","le cou","lə ku","the neck","ðə nek","il collo","il ˈkɔllo","шея","ˈʂejə","el cuello","el ˈkweʎo","o pescoço","u pɨʃˈkosu"],["der Kopf","deːɐ kɔpf","la tête","la tɛt","the head","ðə hed","la testa","la ˈtɛsta","голова","ɡəlɐˈva","la cabeza","la kaˈβeθa","a cabeça","ɐ kɐˈbesɐ"],["der Mund","deːɐ mʊnt","la bouche","la buʃ","the mouth","ðə maʊθ","la bocca","la ˈbokka","рот","rot","la boca","la ˈboka","a boca","ɐ ˈbokɐ"],["der Rücken","deːɐ ˈrʏkən","le dos","lə do","the back","ðə bæk","la schiena","la ˈskjɛːna","спина","spʲɪˈna","la espalda","la esˈpalda","as costas","ɐʃ ˈkɔʃtɐʃ"],["der Zahn","deːɐ tsaːn","la dent","la dɑ̃","the tooth","ðə tuːθ","il dente","il ˈdɛnte","зуб","zup","el diente","el ˈdjente","o dente","u ˈdẽtə"],["die Hand","diː hant","la main","la mɛ̃","the hand","ðə hænd","la mano","la ˈmaːno","рука","rʊˈka","la mano","la ˈmano","a mão","ɐ ˈmɐ̃w"]],[["die Haut","diː haʊt","la peau","la po","the skin","ðə skɪn","la pelle","la ˈpɛlle","кожа","ˈkoʐə","la piel","la pjel","a pele","ɐ ˈpɛlə"],["die Nase","diː ˈnaːzə","le nez","lə nɛ","the nose","ðə nəʊz","il naso","il ˈnaːzo","нос","nos","la nariz","la naˈɾiθ","o nariz","u nɐˈɾiʃ"],["die Schulter","diː ˈʃʊltɐ","l'épaule","lepol","the shoulder","ðə ˈʃəʊldə","la spalla","la ˈspalla","плечо","plʲɪˈtɕo","el hombro","el ˈombɾo","o ombro","u ˈõbɾu"],["die Stirn","diː ʃtɪʁn","le front","lə fʁɔ̃","the forehead","ðə ˈfɔːhed","la fronte","la ˈfronte","лоб","lop","la frente","la ˈfɾente","a testa","ɐ ˈtɛʃtɐ"],["die Zunge","diː ˈtsʊŋə","la langue","la lɑ̃ɡy","the tongue","ðə tʌŋ","la lingua","la ˈliŋɡwa","язык","jɪˈzɨk","la lengua","la ˈleŋɡwa","a língua","ɐ ˈlĩɡwɐ"]]]},"vetements":{"icon":"👕","sets":[[["das Hemd","das hɛmt","la chemise","la ʃəmiz","the shirt","ðə ʃɜːt","la camicia","la kaˈmiːtʃa","рубашка","rʊˈbaʂkə","la camisa","la kaˈmisa","a camisa","ɐ kɐˈmizɐ"],["das Kleid","das klaɪt","la robe","la ʁɔb","the dress","ðə dres","il vestito","il vesˈtiːto","платье","ˈplatʲjə","el vestido","el besˈtiðo","o vestido","u vɨʃˈtidu"],["das T-Shirt","das ˈtiːʃœʁt","le t-shirt","lə  siʁ","the t-shirt","ðə ˈtiːʃɜːt","la maglietta","la maʎˈʎetta","футболка","fʊdˈbolkə","la camiseta","la kamiˈseta","a t-shirt","ɐ tiˈʃɜɾt"],["der Gürtel","deːɐ ˈɡʏʁtəl","la ceinture","la sɛ̃tyʁ","the belt","ðə belt","la cintura","la tʃinˈtuːra","ремень","rʲɪˈmʲenʲ","el cinturón","el θintuˈɾon","o cinto","u ˈsĩtu"],["der Hut","deːɐ huːt","le chapeau","lə ʃapo","the hat","ðə hæt","il cappello","il kapˈpɛllo","шляпа","ˈʂlʲapə","el sombrero","el somˈbɾeɾo","o chapéu","u ʃɐˈpɛw"],["der Mantel","deːɐ ˈmantəl","le manteau","lə mɑ̃to","the coat","ðə kəʊt","il cappotto","il kapˈpɔtto","пальто","pɐlʲˈto","el abrigo","el aˈβɾiɣo","o casacão","u kɐzɐˈkɐ̃w"],["der Ring","deːɐ rɪŋ","la bague","la baɡy","the ring","ðə rɪŋ","l'anello","laˈnɛllo","кольцо","kɐlʲˈtso","el anillo","el aˈniʎo","o anel","u ɐˈnɛl"],["der Rock","deːɐ rɔk","la jupe","la ʒyp","the skirt","ðə skɜːt","la gonna","la ˈɡonna","юбка","ˈjupkə","la falda","la ˈfalda","a saia","ɐ ˈsajɐ"]],[["der Schal","deːɐ ʃaːl","l'écharpe","leʃaʁp","the scarf","ðə skɑːf","la sciarpa","la ˈʃarpa","шарф","ʂarf","la bufanda","la buˈfanda","o cachecol","u kaʃɨˈkɔl"],["der Schmuck","deːɐ ʃmʊk","les bijoux","le biʒu","the jewellery","ðə ˈdʒuːəlri","i gioielli","i dʒoˈjɛlli","украшения","ʊkrɐˈʂenʲɪjə","las joyas","las ˈxoʝas","as joias","ɐʒ ˈʒɔjɐʃ"],["der Schuh","deːɐ ʃuː","la chaussure","la ʃosyʁ","the shoe","ðə ʃuː","la scarpa","la ˈskarpa","ботинок","bɐˈtʲinək","el zapato","el θaˈpato","o sapato","u sɐˈpatu"],["der Stiefel","deːɐ ˈʃtiːfəl","la botte","la bɔt","the boot","ðə buːt","lo stivale","lo stiˈvaːle","сапог","sɐˈpok","la bota","la ˈbota","a bota","ɐ ˈbɔtɐ"],["die Brille","diː ˈbrɪlə","les lunettes","le lynɛtɛ","the glasses","ðə ˈɡlɑːsɪz","gli occhiali","ʎi okˈkjaːli","очки","ɐtɕˈkʲi","las gafas","las ˈɡafas","os óculos","uz ˈɔkuluʃ"],["die Frisur","diː friˈzuːɐ","la coiffure","la kwafyʁ","the hairstyle","ðə ˈheəstaɪl","la pettinatura","la pettinaˈtuːra","причёска","prʲɪˈtɕoskə","el peinado","el pejˈnaðo","o penteado","u pẽtiˈadu"],["die Hose","diː ˈhoːzə","le pantalon","lə pɑ̃talɔ̃","the trousers","ðə ˈtraʊzəz","i pantaloni","i pantaˈloːni","брюки","ˈbrʲukʲɪ","los pantalones","los pantaˈlones","as calças","ɐʃ ˈkalsɐʃ"],["die Jacke","diː ˈjakə","la veste","la vɛst","the jacket","ðə ˈdʒækɪt","la giacca","la ˈdʒakka","куртка","ˈkurtkə","la chaqueta","la tʃaˈketa","o casaco","u kɐˈzaku"]],[["die Jeans","diː dʒiːns","le jean","lə ʒəɑ̃","the jeans","ðə dʒiːnz","i jeans","i ˈdʒins","джинсы","ˈdʐɨnsɨ","los vaqueros","los baˈkeɾos","as jeans","ɐʒ ˈʒinʃ"],["die Mütze","diː ˈmʏtsə","le bonnet","lə bɔnɛ","the cap","ðə kæp","il berretto","il berˈretto","шапка","ˈʂapkə","el gorro","el ˈɡoro","o gorro","u ˈɡoʁu"],["die Socke","diː ˈzɔkə","la chaussette","la ʃosɛt","the sock","ðə sɒk","il calzino","il kalˈtsiːno","носок","nɐˈsok","el calcetín","el kalθeˈtin","a meia","ɐ ˈmɐjɐ"],["die Tasche","diː ˈtaʃə","le sac","lə sak","the bag","ðə bæɡ","la borsa","la ˈborsa","сумка","ˈsumkə","el bolso","el ˈbolso","a bolsa","ɐ ˈbolsɐ"]]]},"maison":{"icon":"🏠","sets":[[["das Bad","das baːt","la salle de bain","la sal də bɛ̃","the bathroom","ðə ˈbɑːθruːm","il bagno","il ˈbaɲɲo","ванная","ˈvanːəjə","el baño","el ˈbaɲo","a casa de banho","ɐ ˈkazɐ də ˈbɐɲu"],["das Bett","das bɛt","le lit","lə li","the bed","ðə bed","il letto","il ˈlɛtto","кровать","krɐˈvatʲ","la cama","la ˈkama","a cama","ɐ ˈkɐmɐ"],["das Dach","das dax","le toit","lə twa","the roof","ðə ruːf","il tetto","il ˈtɛtto","крыша","ˈkrɨʂə","el tejado","el teˈxaðo","o telhado","u tɨˈʎadu"],["das Fenster","das ˈfɛnstɐ","la fenêtre","la fənɛtʁ","the window","ðə ˈwɪndəʊ","la finestra","la fiˈnɛstra","окно","ɐkˈno","la ventana","la benˈtana","a janela","ɐ ʒɐˈnɛlɐ"],["das Haus","das haʊs","la maison","la mɛzɔ̃","the house","ðə haʊs","la casa","la ˈkaːza","дом","dom","la casa","la ˈkasa","a casa","ɐ ˈkazɐ"],["das Wohnzimmer","das ˈvoːntsɪmɐ","le salon","lə salɔ̃","the living room","ðə ˈlɪvɪŋ ruːm","il soggiorno","il sodˈdʒorno","гостиная","ɡɐsˈtʲinəjə","la sala de estar","la ˈsala ðe esˈtaɾ","a sala de estar","ɐ ˈsalɐ də ɨʃˈtaɾ"],["das Zimmer","das ˈtsɪmɐ","la chambre","la ʃɑ̃bʁ","the room","ðə ruːm","la camera","la ˈkaːmera","комната","ˈkomnətə","la habitación","la aβitaˈθjon","o quarto","u ˈkwaɾtu"],["der Balkon","deːɐ balˈkɔŋ","le balcon","lə balkɔ̃","the balcony","ðə ˈbælkəni","il balcone","il balˈkoːne","балкон","bɐlˈkon","el balcón","el balˈkon","a varanda","ɐ vɐˈɾɐ̃dɐ"]],[["der Dachboden","deːɐ ˈdaxboːdən","le grenier","lə ɡʁənjɛʁ","the attic","ði ˈætɪk","la soffitta","la sofˈfitta","чердак","tɕɪrˈdak","el desván","el desˈβan","o sótão","u ˈsɔtɐ̃w"],["der Garten","deːɐ ˈɡaʁtən","le jardin","lə ʒaʁdɛ̃","the garden","ðə ˈɡɑːdn","il giardino","il dʒarˈdiːno","сад","sat","el jardín","el xaɾˈðin","o jardim","u ʒɐɾˈdĩ"],["der Keller","deːɐ ˈkɛlɐ","la cave","la kav","the cellar","ðə ˈselə","la cantina","la kanˈtiːna","подвал","pɐdˈval","el sótano","el ˈsotano","a cave","ɐ ˈkavə"],["der Kühlschrank","deːɐ ˈkyːlʃraŋk","le réfrigérateur","lə ʁefʁiɡeʁatœʁ","the fridge","ðə frɪdʒ","il frigorifero","il friɡoˈriːfero","холодильник","xəlɐˈdʲilʲnʲɪk","la nevera","la neˈβeɾa","o frigorífico","u fɾiɡuˈɾifiku"],["der Schrank","deːɐ ʃraŋk","l'armoire","laʁmwaʁ","the wardrobe","ðə ˈwɔːdrəʊb","l'armadio","larˈmaːdjo","шкаф","ʂkaf","el armario","el aɾˈmaɾjo","o armário","u ɐɾˈmaɾju"],["der Spiegel","deːɐ ˈʃpiːɡəl","le miroir","lə miʁwaʁ","the mirror","ðə ˈmɪrə","lo specchio","lo ˈspekkjo","зеркало","ˈzʲerkələ","el espejo","el esˈpexo","o espelho","u ɨʃˈpeʎu"],["der Stuhl","deːɐ ʃtuːl","la chaise","la ʃɛz","the chair","ðə tʃeə","la sedia","la ˈsɛːdja","стул","stul","la silla","la ˈsiʎa","a cadeira","ɐ kɐˈdɐjɾɐ"],["der Teppich","deːɐ ˈtɛpɪç","le tapis","lə tapi","the carpet","ðə ˈkɑːpɪt","il tappeto","il tapˈpeːto","ковёр","kɐˈvʲor","la alfombra","la alˈfombɾa","o tapete","u tɐˈpetə"]],[["der Tisch","deːɐ tɪʃ","la table","la tabl","the table","ðə ˈteɪbl","il tavolo","il ˈtaːvolo","стол","stol","la mesa","la ˈmesa","a mesa","ɐ ˈmezɐ"],["die Garage","diː ɡaˈraːʒə","le garage","lə ɡaʁaʒ","the garage","ðə ˈɡærɑːʒ","il garage","il ɡaˈraʒ","гараж","ɡɐˈraʂ","el garaje","el ɡaˈɾaxe","a garagem","ɐ ɡɐˈɾaʒɐ̃j"],["die Küche","diː ˈkʏçə","la cuisine","la kɥizin","the kitchen","ðə ˈkɪtʃɪn","la cucina","la kuˈtʃiːna","кухня","ˈkuxnʲə","la cocina","la koˈθina","a cozinha","ɐ kuˈziɲɐ"],["die Lampe","diː ˈlampə","la lampe","la lɑ̃p","the lamp","ðə læmp","la lampada","la ˈlampada","лампа","ˈlampə","la lámpara","la ˈlampaɾa","a lâmpada","ɐ ˈlɐ̃pɐdɐ"],["die Treppe","diː ˈtrɛpə","l'escalier","lɛskaljɛʁ","the stairs","ðə steəz","la scala","la ˈskaːla","лестница","ˈlʲesnʲɪtsə","la escalera","la eskaˈleɾa","a escada","ɐ ɨʃˈkadɐ"],["die Tür","diː tyːɐ","la porte","la pɔʁt","the door","ðə dɔː","la porta","la ˈpɔrta","дверь","dvʲerʲ","la puerta","la ˈpweɾta","a porta","ɐ ˈpɔɾtɐ"],["die Waschküche","diː ˈvaʃkʏçə","la buanderie","la byɑ̃dəʁi","the laundry room","ðə ˈlɔːndri ruːm","la lavanderia","la lavandeˈriːa","прачечная","ˈpratɕɪʂnəjə","la lavandería","la laβandeˈɾia","a lavandaria","ɐ lɐvɐ̃dɐˈɾiɐ"]]]},"ecole":{"icon":"🎓","sets":[[["das Abitur","das abiˈtuːɐ","le baccalauréat","lə bakaloʁea","the school-leaving exam","ðə skuːl ˈliːvɪŋ ɪɡˈzæm","la maturità","la maturiˈta","аттестат","ətʲɪsˈtat","el bachillerato","el batʃiʎeˈɾato","o bacharelato","u bɐʃɐɾɨˈlatu"],["das Buch","das buːx","le livre","lə livʁ","the book","ðə bʊk","il libro","il ˈliːbro","книга","ˈknʲiɡə","el libro","el ˈliβɾo","o livro","u ˈlivɾu"],["das Fach","das fax","la matière","la matjɛʁ","the subject","ðə ˈsʌbdʒɪkt","la materia","la maˈtɛːrja","предмет","prʲɪdˈmʲet","la asignatura","la asiɣnaˈtuɾa","a disciplina","ɐ diʃsiˈplinɐ"],["das Heft","das hɛft","le cahier","lə kajɛʁ","the notebook","ðə ˈnəʊtbʊk","il quaderno","il kwaˈdɛrno","тетрадь","tʲɪˈtratʲ","el cuaderno","el kwaˈðeɾno","o caderno","u kɐˈdɛɾnu"],["das Lineal","das lineˈaːl","la règle","la ʁɛɡl","the ruler","ðə ˈruːlə","il righello","il riˈɡɛllo","линейка","lʲɪˈnʲejkə","la regla","la ˈreɣla","a régua","ɐ ˈʁɛɡwɐ"],["das Wörterbuch","das ˈvœʁtɐbuːx","le dictionnaire","lə diktjɔnɛʁ","the dictionary","ðə ˈdɪkʃənri","il dizionario","il dittsjoˈnaːrjo","словарь","slɐˈvarʲ","el diccionario","el dikθjoˈnaɾjo","o dicionário","u disjuˈnaɾju"],["das Zeugnis","das ˈtsɔɪknɪs","le bulletin","lə bylətɛ̃","the report card","ðə rɪˈpɔːt kɑːd","la pagella","la paˈdʒɛlla","табель","ˈtabʲɪlʲ","el boletín","el boleˈtin","o boletim","u bulɨˈtĩ"],["der Bleistift","deːɐ ˈblaɪʃtɪft","le crayon","lə kʁajɔ̃","the pencil","ðə ˈpensl","la matita","la maˈtiːta","карандаш","kərɐnˈdaʂ","el lápiz","el ˈlapiθ","o lápis","u ˈlapiʃ"]],[["der Direktor","deːɐ diˈrɛktoːɐ","le directeur","lə diʁɛktœʁ","the principal","ðə ˈprɪnsəpl","il direttore","il diretˈtoːre","директор","dʲɪˈrʲektər","el director","el diɾekˈtoɾ","o diretor","u diɾɨˈtoɾ"],["der Lehrer","deːɐ ˈleːʁɐ","le professeur","lə pʁɔfɛsœʁ","the teacher","ðə ˈtiːtʃə","l'insegnante","linseɲˈɲante","учитель","ʊˈtɕitʲɪlʲ","el profesor","el pɾofeˈsoɾ","o professor","u pɾufɨˈsoɾ"],["der Rucksack","deːɐ ˈrʊkzak","le sac à dos","lə sak a do","the backpack","ðə ˈbækpæk","lo zaino","lo ˈdzaino","рюкзак","rʲʊɡˈzak","la mochila","la moˈtʃila","a mochila","ɐ muˈʃilɐ"],["der Schüler","deːɐ ˈʃyːlɐ","l'élève","lelɛv","the student","ðə ˈstjuːdnt","l'alunno","laˈlunno","ученик","ʊtɕɪˈnʲik","el alumno","el aˈlumno","o aluno","u ɐˈlunu"],["der Stift","deːɐ ʃtɪft","le stylo","lə stilo","the pen","ðə pen","la penna","la ˈpenna","ручка","ˈrutɕkə","el bolígrafo","el boˈliɣɾafo","a caneta","ɐ kɐˈnetɐ"],["die Bibliothek","diː bibliˈoteːk","la bibliothèque","la bibljɔtɛk","the library","ðə ˈlaɪbrəri","la biblioteca","la biblioˈtɛːka","библиотека","bʲɪblʲɪɐˈtʲekə","la biblioteca","la βiβljoˈteka","a biblioteca","ɐ bibliuˈtɛkɐ"],["die Hausaufgabe","diː ˈhaʊsaʊfɡaːbə","le devoir","lə dəvwaʁ","the homework","ðə ˈhəʊmwɜːk","il compito","il ˈkompito","домашнее задание","dɐˈmaʂnʲɪjə zɐˈdanʲɪjə","la tarea","la taˈɾea","o trabalho de casa","u tɾɐˈbaʎu də ˈkazɐ"],["die Klasse","diː ˈklasə","la classe","la klas","the class","ðə klɑːs","la classe","la ˈklasse","класс","klas","la clase","la ˈklase","a turma","ɐ ˈtuɾmɐ"]],[["die Note","diː ˈnoːtə","la note","la nɔt","the grade","ðə ɡreɪd","il voto","il ˈvɔːto","оценка","ɐˈtsenkə","la nota","la ˈnota","a nota","ɐ ˈnɔtɐ"],["die Pause","diː ˈpaʊzə","la récréation","la ʁekʁeatjɔ̃","the break","ðə breɪk","la ricreazione","la rikreatˈtsjoːne","перемена","pʲɪrʲɪˈmʲenə","el recreo","el reˈkɾeo","o recreio","u ʁɨˈkɾɐju"],["die Prüfung","diː ˈpryːfʊŋ","l'examen","ləksamɑ̃","the exam","ði ɪɡˈzæm","l'esame","leˈzaːme","экзамен","ɛɡˈzamʲɪn","el examen","el ekˈsamen","o exame","u iˈzɐmə"],["die Schere","diː ˈʃeːʁə","les ciseaux","le sizo","the scissors","ðə ˈsɪzəz","le forbici","le ˈforbitʃi","ножницы","ˈnoʐnʲɪtsɨ","las tijeras","las tiˈxeɾas","a tesoura","ɐ tɨˈzoɾɐ"],["die Schule","diː ˈʃuːlə","l'école","lekɔl","the school","ðə skuːl","la scuola","la ˈskwɔːla","школа","ˈʂkolə","la escuela","la esˈkwela","a escola","ɐ ɨʃˈkɔlɐ"],["die Tafel","diː ˈtaːfəl","le tableau","lə tablo","the blackboard","ðə ˈblækbɔːd","la lavagna","la laˈvaɲɲa","доска","dɐsˈka","la pizarra","la piˈθara","o quadro","u ˈkwadɾu"],["die Turnhalle","diː ˈtʊʁnhalə","le gymnase","lə ʒimnaz","the gymnasium","ðə dʒɪmˈneɪzɪəm","la palestra","la paˈlɛstra","спортзал","sportˈzal","el gimnasio","el ximˈnasjo","o ginásio","u ʒiˈnazju"],["die Übung","diː ˈyːbʊŋ","l'exercice","ləksɛʁsis","the exercise","ði ˈeksəsaɪz","l'esercizio","lezerˈtʃittsjo","упражнение","ʊprɐʐˈnʲenʲɪjə","el ejercicio","el exeɾˈθiθjo","o exercício","u izɨɾˈsisju"]]]},"ville":{"icon":"🏙","sets":[[["das Dorf","das dɔʁf","le village","lə vijaʒ","the village","ðə ˈvɪlɪdʒ","il villaggio","il vilˈladdʒo","деревня","dʲɪˈrʲevnʲə","el pueblo","el ˈpweβlo","a aldeia","ɐ alˈdɐjɐ"],["das Hotel","das hoˈtɛl","l'hôtel","lotɛl","the hotel","ðə həʊˈtel","l'albergo","lalˈbɛrɡo","гостиница","ɡɐˈsʲtʲinʲɪtsə","el hotel","el oˈtel","o hotel","u oˈtɛl"],["das Kino","das ˈkiːno","le cinéma","lə sinema","the cinema","ðə ˈsɪnəmə","il cinema","il ˈtʃiːnema","кино","kʲɪˈno","el cine","el ˈθine","o cinema","u siˈnemɐ"],["das Krankenhaus","das ˈkraŋkənhaʊs","l'hôpital","lopital","the hospital","ðə ˈhɒspɪtl","l'ospedale","lospeˈdaːle","больница","bɐlʲˈnʲitsə","el hospital","el ospiˈtal","o hospital","u oʃpiˈtal"],["das Museum","das muˈzeːʊm","le musée","lə myze","the museum","ðə mjuːˈziːəm","il museo","il muˈzɛːo","музей","mʊˈzʲej","el museo","el muˈseo","o museu","u muˈzew"],["das Rathaus","das ˈraːthaʊs","la mairie","la mɛʁi","the town hall","ðə taʊn hɔːl","il municipio","il muniˈtʃiːpjo","ратуша","ˈratʊʂə","el ayuntamiento","el aʝuntaˈmjento","a câmara municipal","ɐ ˈkɐmɐɾɐ munisiˈpal"],["das Restaurant","das rɛstoˈrɑ̃ː","le restaurant","lə ʁɛstoʁɑ̃","the restaurant","ðə ˈrestrɒnt","il ristorante","il ristoˈrante","ресторан","rʲɪstɐˈran","el restaurante","el restauˈɾante","o restaurante","u ʁɨʃtawˈɾɐ̃tə"],["das Schloss","das ʃlɔs","le château","lə ʃɑto","the castle","ðə ˈkɑːsl","il castello","il kasˈtɛllo","замок","ˈzamək","el castillo","el kasˈtiʎo","o castelo","u kɐʃˈtɛlu"]],[["das Schwimmbad","das ˈʃvɪmbaːt","la piscine","la pissin","the swimming pool","ðə ˈswɪmɪŋ puːl","la piscina","la piʃˈʃiːna","бассейн","bɐˈsʲejn","la piscina","la pisˈθina","a piscina","ɐ piʃˈsinɐ"],["der Laden","deːɐ ˈlaːdən","le magasin","lə maɡazɛ̃","the shop","ðə ʃɒp","il negozio","il neˈɡɔttsjo","магазин","məɡɐˈzʲin","la tienda","la ˈtjenda","a loja","ɐ ˈlɔʒɐ"],["der Markt","deːɐ maʁkt","le marché","lə maʁʃe","the market","ðə ˈmɑːkɪt","il mercato","il merˈkaːto","рынок","ˈrɨnək","el mercado","el meɾˈkaðo","o mercado","u mɨɾˈkadu"],["der Park","deːɐ paʁk","le parc","lə paʁk","the park","ðə pɑːk","il parco","il ˈparko","парк","park","el parque","el ˈpaɾke","o parque","u ˈpaɾkə"],["der Platz","deːɐ plats","la place","la plas","the square","ðə skweə","la piazza","la ˈpjattsa","площадь","ˈploɕɕətʲ","la plaza","la ˈplaθa","a praça","ɐ ˈpɾasɐ"],["der Turm","deːɐ tʊʁm","la tour","la tuʁ","the tower","ðə ˈtaʊə","la torre","la ˈtorre","башня","ˈbaʂnʲə","la torre","la ˈtore","a torre","ɐ ˈtoʁə"],["die Altstadt","diː ˈaltʃtat","la vieille ville","la vjɛl vij","the old town","ði əʊld taʊn","il centro storico","il ˈtʃɛntro ˈstɔːriko","старый город","ˈstarɨj ˈɡorət","el casco antiguo","el ˈkasko anˈtiɣwo","o centro histórico","u ˈsẽtɾu iʃˈtɔɾiku"],["die Apotheke","diː apoˈteːkə","la pharmacie","la faʁmasi","the pharmacy","ðə ˈfɑːməsi","la farmacia","la farmaˈtʃiːa","аптека","ɐpˈtʲekə","la farmacia","la faɾˈmaθja","a farmácia","ɐ fɐɾˈmasjɐ"]],[["die Bank","diː baŋk","la banque","la bɑ̃k","the bank","ðə bæŋk","la banca","la ˈbaŋka","банк","bank","el banco","el ˈbaŋko","o banco","u ˈbɐ̃ku"],["die Baustelle","diː ˈbaʊʃtɛlə","le chantier","lə ʃɑ̃tjɛʁ","the construction site","ðə kənˈstrʌkʃn saɪt","il cantiere","il kanˈtjɛːre","стройка","ˈstrojkə","la obra","la ˈoβɾa","a obra","ɐ ˈɔbɾɐ"],["die Kirche","diː ˈkɪʁçə","l'église","leɡliz","the church","ðə tʃɜːtʃ","la chiesa","la ˈkjɛːza","церковь","ˈtsɛrkəfʲ","la iglesia","la iˈɣlesja","a igreja","ɐ iˈɡɾɐjɐ"],["die Post","diː pɔst","la poste","la pɔst","the post office","ðə ˈpəʊst ˈɒfɪs","la posta","la ˈpɔsta","почта","ˈpotɕtə","el correo","el koˈreo","o correio","u kuˈʁɐju"],["die Stadt","diː ʃtat","la ville","la vij","the city","ðə ˈsɪti","la città","la tʃitˈta","город","ˈɡorət","la ciudad","la θjuˈðað","a cidade","ɐ siˈdadə"],["das Denkmal","das dənkˈmal","le monument","lə mɔnymɑ̃","monument","","monumento","monuˈmɛnto","памятник","","monumento","monuˈmento","monumento",""]]]},"transports":{"icon":"🚆","sets":[[["das Auto","das ˈaʊto","la voiture","la vwatyʁ","the car","ðə kɑː","la macchina","la ˈmakkina","машина","mɐˈʂɨnə","el coche","el ˈkotʃe","o carro","u ˈkaʁu"],["das Fahrrad","das ˈfaːɐraːt","le vélo","lə velo","the bicycle","ðə ˈbaɪsɪkl","la bicicletta","la bitʃiˈkletta","велосипед","vʲɪləsʲɪˈpʲet","la bicicleta","la biθiˈkleta","a bicicleta","ɐ bisiˈklɛtɐ"],["das Flugzeug","das ˈfluːktsɔɪk","l'avion","lavjɔ̃","the airplane","ði ˈeəpleɪn","l'aereo","laˈɛːreo","самолёт","səmɐˈlʲot","el avión","el aˈβjon","o avião","u ɐviˈɐ̃w"],["das Motorrad","das ˈmoːtoːɐraːt","la moto","la mɔto","the motorcycle","ðə ˈməʊtəsaɪkl","la moto","la ˈmɔːto","мотоцикл","mətɐˈtsɨkl","la moto","la ˈmoto","a mota","ɐ ˈmɔtɐ"],["das Schiff","das ʃɪf","le bateau","lə bato","the ship","ðə ʃɪp","la nave","la ˈnaːve","корабль","kɐˈrablʲ","el barco","el ˈbaɾko","o navio","u nɐˈviu"],["das Taxi","das ˈtaksi","le taxi","lə taksi","the taxi","ðə ˈtæksi","il taxi","il ˈtaksi","такси","tɐkˈsʲi","el taxi","el ˈtaksi","o táxi","u ˈtaksi"],["der Bahnhof","deːɐ ˈbaːnhoːf","la gare","la ɡaʁ","the station","ðə ˈsteɪʃn","la stazione","la statˈtsjoːne","вокзал","vɐɡˈzal","la estación","la estaˈθjon","a estação","ɐ ɨʃtɐˈsɐ̃w"],["der Bus","deːɐ bʊs","le bus","lə by","the bus","ðə bʌs","l'autobus","ˈlautobus","автобус","ɐfˈtobʊs","el autobús","el autoˈβus","o autocarro","u awtoˈkaʁu"]],[["der Flughafen","deːɐ ˈfluːkhaːfən","l'aéroport","laeʁɔpɔʁ","the airport","ði ˈeəpɔːt","l'aeroporto","laeroˈpɔrto","аэропорт","əɪrɐˈport","el aeropuerto","el aeɾoˈpweɾto","o aeroporto","u ɐiɾuˈpoɾtu"],["der Lastwagen","deːɐ ˈlastvaːɡən","le camion","lə kamjɔ̃","the truck","ðə trʌk","il camion","il ˈkamjon","грузовик","ɡrʊzɐˈvʲik","el camión","el kaˈmjon","o camião","u kɐmiˈɐ̃w"],["der Stau","deːɐ ʃtaʊ","l'embouteillage","lɑ̃butɛlaʒ","the traffic jam","ðə ˈtræfɪk dʒæm","l'ingorgo","linˈɡorɡo","пробка","ˈproPkə","el atasco","el aˈtasko","o engarrafamento","u ẽɡɐʁɐfɐˈmẽtu"],["der Weg","deːɐ veːk","le chemin","lə ʃəmɛ̃","the way","ðə weɪ","la via","la ˈviːa","путь","putʲ","el camino","el kaˈmino","o caminho","u kɐˈmiɲu"],["der Zug","deːɐ tsuːk","le train","lə tʁɛ̃","the train","ðə treɪn","il treno","il ˈtrɛːno","поезд","ˈpojɪst","el tren","el tɾen","o comboio","u kõˈboju"],["die Ampel","diː ˈampəl","le feu","lə fø","the traffic light","ðə ˈtræfɪk laɪt","il semaforo","il seˈmaːforo","светофор","svʲɪtɐˈfor","el semáforo","el seˈmafoɾo","o semáforo","u sɨˈmafuɾu"],["die Autobahn","diː ˈaʊtobaːn","l'autoroute","lotɔʁut","the motorway","ðə ˈməʊtəweɪ","l'autostrada","lautoˈstraːda","автомагистраль","əftəməɡʲɪˈstralʲ","la autopista","la autoˈpista","a autoestrada","ɐ awtuɨʃˈtɾadɐ"],["die Brücke","diː ˈbrʏkə","le pont","lə pɔ̃","the bridge","ðə brɪdʒ","il ponte","il ˈponte","мост","most","el puente","el ˈpwente","a ponte","ɐ ˈpõtə"]],[["die Fahrkarte","diː ˈfaːɐkaʁtə","le billet","lə bijɛ","the ticket","ðə ˈtɪkɪt","il biglietto","il biʎˈʎetto","билет","bʲɪˈlʲet","el billete","el biˈʎete","o bilhete","u biˈʎetə"],["die Fähre","diː ˈfɛːʁə","le ferry","lə fɛʁi","the ferry","ðə ˈferi","il traghetto","il traˈɡetto","паром","pɐˈrom","el ferry","el ˈferi","o ferry","u ˈfɛʁi"],["die Kreuzung","diː ˈkrɔɪtsʊŋ","le carrefour","lə kaʁəfuʁ","the crossroads","ðə ˈkrɒsrəʊdz","l'incrocio","linˈkroːtʃo","перекрёсток","pʲɪrʲɪˈkrʲostək","el cruce","el ˈkɾuθe","o cruzamento","u kɾuzɐˈmẽtu"],["die Reise","diː ˈraɪzə","le voyage","lə vojaʒ","the journey","ðə ˈdʒɜːni","il viaggio","il ˈvjaddʒo","путешествие","pʊtʲɪˈʂestvʲɪjə","el viaje","el ˈbjaxe","a viagem","ɐ viˈaʒɐ̃j"],["die Seilbahn","diː ˈzaɪlbaːn","le téléphérique","lə telefeʁik","the cable car","ðə ˈkeɪbl kɑː","la funivia","la funiˈviːa","канатная дорога","kɐˈnatnəjə dɐˈroɡə","el teleférico","el teleˈfeɾiko","o teleférico","u tɨlɨˈfɛɾiku"],["die Straße","diː ˈʃtraːsə","la rue","la ʁy","the street","ðə striːt","la strada","la ˈstraːda","улица","ˈulʲɪtsə","la calle","la ˈkaʎe","a rua","ɐ ˈʁuɐ"],["die Straßenbahn","diː ˈʃtraːsənbaːn","le tramway","lə tʁɑ̃wai","the tram","ðə træm","il tram","il ˈtram","трамвай","trɐmˈvaj","el tranvía","el tɾamˈbia","o elétrico","u iˈlɛtɾiku"],["die U-Bahn","diː ˈuːbaːn","le métro","lə metʁo","the subway","ðə ˈsʌbweɪ","la metropolitana","la metropoliˈtaːna","метро","mʲɪˈtro","el metro","el ˈmetɾo","o metro","u ˈmɛtɾu"]]]},"nature":{"icon":"🌿","sets":[[["das Feld","das fɛlt","le champ","lə ʃɑ̃","the field","ðə fiːld","il campo","il ˈkampo","поле","ˈpolʲə","el campo","el ˈkampo","o campo","u ˈkɐ̃pu"],["das Gewitter","das ɡəˈvɪtɐ","l'orage","lɔʁaʒ","the thunderstorm","ðə ˈθʌndəstɔːm","il temporale","il tempoˈraːle","гроза","ɡrɐˈza","la tormenta","la toɾˈmenta","a trovoada","ɐ tɾuvuˈadɐ"],["das Gras","das ɡraːs","l'herbe","lɛʁb","the grass","ðə ɡrɑːs","l'erba","ˈlɛrba","трава","trɐˈva","la hierba","la ˈjeɾβa","a erva","ɐ ˈɛɾvɐ"],["das Meer","das meːɐ","la mer","la mɛʁ","the sea","ðə siː","il mare","il ˈmaːre","море","ˈmorʲə","el mar","el maɾ","o mar","u maɾ"],["das Tal","das taːl","la vallée","la vale","the valley","ðə ˈvæli","la valle","la ˈvalle","долина","dɐˈlʲinə","el valle","el ˈbaʎe","o vale","u ˈvalə"],["der Baum","deːɐ baʊm","l'arbre","laʁbʁ","the tree","ðə triː","l'albero","ˈlalbero","дерево","ˈdʲerʲɪvə","el árbol","el ˈaɾβol","a árvore","ɐ ˈaɾvuɾə"],["der Berg","deːɐ bɛʁk","la montagne","la mɔ̃taɲ","the mountain","ðə ˈmaʊntɪn","la montagna","la monˈtaɲɲa","гора","ɡɐˈra","la montaña","la monˈtaɲa","a montanha","ɐ mõˈtɐɲɐ"],["der Fluss","deːɐ flʊs","la rivière","la ʁivjɛʁ","the river","ðə ˈrɪvə","il fiume","il ˈfjuːme","река","rʲɪˈka","el río","el ˈrio","o rio","u ˈʁiu"]],[["der Himmel","deːɐ ˈhɪməl","le ciel","lə sjɛl","the sky","ðə skaɪ","il cielo","il ˈtʃɛːlo","небо","ˈnʲebə","el cielo","el ˈθjelo","o céu","u ˈsɛw"],["der Mond","deːɐ moːnt","la lune","la lyn","the moon","ðə muːn","la luna","la ˈluːna","луна","lʊˈna","la luna","la ˈluna","a lua","ɐ ˈluɐ"],["der Regen","deːɐ ˈreːɡən","la pluie","la plɥi","the rain","ðə reɪn","la pioggia","la ˈpjɔddʒa","дождь","doʂtʲ","la lluvia","la ˈʎuβja","a chuva","ɐ ˈʃuvɐ"],["der Schnee","deːɐ ʃneː","la neige","la nɛʒ","the snow","ðə snəʊ","la neve","la ˈneːve","снег","snʲek","la nieve","la ˈnjeβe","a neve","ɐ ˈnɛvə"],["der See","deːɐ zeː","le lac","lə lak","the lake","ðə leɪk","il lago","il ˈlaːɡo","озеро","ˈozʲɪrə","el lago","el ˈlaɣo","o lago","u ˈlaɣu"],["der Stein","deːɐ ʃtaɪn","la pierre","la pjɛʁ","the stone","ðə stəʊn","la pietra","la ˈpjɛːtra","камень","ˈkamʲɪnʲ","la piedra","la ˈpjeðɾa","a pedra","ɐ ˈpɛdɾɐ"],["der Strand","deːɐ ʃtrant","la plage","la plaʒ","the beach","ðə biːtʃ","la spiaggia","la ˈspjaddʒa","пляж","plʲaʂ","la playa","la ˈplaʝa","a praia","ɐ ˈpɾajɐ"],["der Wald","deːɐ valt","la forêt","la fɔʁɛ","the forest","ðə ˈfɒrɪst","la foresta","la foˈrɛsta","лес","lʲes","el bosque","el ˈboske","a floresta","ɐ fluˈɾɛʃtɐ"]],[["der Wind","deːɐ vɪnt","le vent","lə vɑ̃","the wind","ðə wɪnd","il vento","il ˈvɛnto","ветер","ˈvʲetʲɪr","el viento","el ˈbjento","o vento","u ˈvẽtu"],["die Blume","diː ˈbluːmə","la fleur","la flœʁ","the flower","ðə ˈflaʊə","il fiore","il ˈfjoːre","цветок","tsvʲɪˈtok","la flor","la floɾ","a flor","ɐ floɾ"],["die Insel","diː ˈɪnzəl","l'île","lil","the island","ði ˈaɪlənd","l'isola","ˈliːzola","остров","ˈostrəf","la isla","la ˈizla","a ilha","ɐ ˈiʎɐ"],["die Kälte","diː ˈkɛltə","le froid","lə fʁwa","the cold","ðə kəʊld","il freddo","il ˈfreddo","холод","ˈxolət","el frío","el ˈfɾio","o frio","u ˈfɾiu"],["die Sonne","diː ˈzɔnə","le soleil","lə sɔlɛl","the sun","ðə sʌn","il sole","il ˈsoːle","солнце","ˈsontsə","el sol","el sol","o sol","u sɔl"],["die Wolke","diː ˈvɔlkə","le nuage","lə nyaʒ","the cloud","ðə klaʊd","la nuvola","la ˈnuːvola","облако","ˈobləkə","la nube","la ˈnuβe","a nuvem","ɐ ˈnuvɐ̃j"],["die Wärme","diː ˈvɛʁmə","la chaleur","la ʃalœʁ","the warmth","ðə wɔːmθ","il calore","il kaˈloːre","тепло","tʲɪˈplo","el calor","el kaˈloɾ","o calor","u kɐˈloɾ"]]]},"temps":{"icon":"🕐","sets":[[["das Jahr","das jaːɐ","l'année","lane","the year","ðə jɪə","l'anno","ˈlanno","год","ɡot","el año","el ˈaɲo","o ano","u ˈɐnu"],["das Jahrhundert","das jaːɐˈhʊndɐt","le siècle","lə sjɛkl","the century","ðə ˈsentʃəri","il secolo","il ˈsɛːkolo","век","vʲek","el siglo","el ˈsiɣlo","o século","u ˈsɛkulu"],["der Feiertag","deːɐ ˈfaɪɐtaːk","le jour férié","lə ʒuʁ feʁje","the public holiday","ðə ˈpʌblɪk ˈhɒlədeɪ","la festività","la festiviˈta","праздник","ˈpraznʲɪk","el día festivo","el ˈdia fesˈtiβo","o feriado","u fɨɾiˈadu"],["der Frühling","deːɐ ˈfryːlɪŋ","le printemps","lə pʁɛ̃tɑ̃p","the spring","ðə sprɪŋ","la primavera","la primaˈvɛːra","весна","vʲɪsˈna","la primavera","la pɾimaˈβeɾa","a primavera","ɐ pɾimɐˈvɛɾɐ"],["der Geburtstag","deːɐ ɡəˈbuːɐtstaːk","l'anniversaire","lanivɛʁsɛʁ","the birthday","ðə ˈbɜːθdeɪ","il compleanno","il compleˈanno","день рождения","dʲenʲ rɐʐˈdʲenʲɪjə","el cumpleaños","el kumpleˈaɲos","o aniversário","u ɐnivɨɾˈsaɾju"],["der Herbst","deːɐ hɛʁpst","l'automne","lotɔmn","the autumn","ði ˈɔːtəm","l'autunno","lauˈtunno","осень","ˈosʲɪnʲ","el otoño","el oˈtoɲo","o outono","u oˈtonu"],["der Monat","deːɐ ˈmoːnat","le mois","lə mwa","the month","ðə mʌnθ","il mese","il ˈmeːze","месяц","ˈmʲesʲɪts","el mes","el mes","o mês","u meʃ"],["der Sommer","deːɐ ˈzɔmɐ","l'été","lete","the summer","ðə ˈsʌmə","l'estate","lesˈtaːte","лето","ˈlʲetə","el verano","el beˈɾano","o verão","u vɨˈɾɐ̃w"]],[["der Tag","deːɐ taːk","le jour","lə ʒuʁ","the day","ðə deɪ","il giorno","il ˈdʒorno","день","dʲenʲ","el día","el ˈdia","o dia","u ˈdiɐ"],["der Winter","deːɐ ˈvɪntɐ","l'hiver","livɛʁ","the winter","ðə ˈwɪntə","l'inverno","linˈvɛrno","зима","zʲɪˈma","el invierno","el imˈbjeɾno","o inverno","u ĩˈvɛɾnu"],["die Ferien","diː ˈfeːʁiən","les vacances","le vakɑ̃sɛ","the holidays","ðə ˈhɒlədeɪz","le vacanze","le vaˈkantse","каникулы","kɐˈnʲikʊlɨ","las vacaciones","las bakaˈθjones","as férias","ɐʃ ˈfɛɾjɐʃ"],["die Minute","diː miˈnuːtə","la minute","la minyt","the minute","ðə ˈmɪnɪt","il minuto","il miˈnuːto","минута","mʲɪˈnutə","el minuto","el miˈnuto","o minuto","u miˈnutu"],["die Nacht","diː naxt","la nuit","la nɥi","the night","ðə naɪt","la notte","la ˈnɔtte","ночь","notɕ","la noche","la ˈnotʃe","a noite","ɐ ˈnojtə"],["die Stunde","diː ˈʃtʊndə","l'heure","lœʁ","the hour","ði ˈaʊə","l'ora","ˈloːra","час","tɕas","la hora","la ˈoɾa","a hora","ɐ ˈɔɾɐ"],["die Woche","diː ˈvɔxə","la semaine","la səmɛn","the week","ðə wiːk","la settimana","la settiˈmaːna","неделя","nʲɪˈdʲelʲə","la semana","la seˈmana","a semana","ɐ sɨˈmɐnɐ"],["die Zeit","diː tsaɪt","le temps","lə tɑ̃p","the time","ðə taɪm","il tempo","il ˈtɛmpo","время","ˈvrʲemʲə","el tiempo","el ˈtjempo","o tempo","u ˈtẽpu"]],[["gestern","ˈɡɛstɐn","hier","jɛʁ","yesterday","ˈjestədeɪ","ieri","ˈjɛːri","вчера","ftɕɪˈra","ayer","aˈʝeɾ","ontem","ˈõtɐ̃j"],["heute","ˈhɔɪtə","aujourd'hui","oʒuʁdɥi","today","təˈdeɪ","oggi","ˈɔddʒi","сегодня","sʲɪˈvodnʲə","hoy","oj","hoje","ˈoʒə"],["morgen","ˈmɔʁɡən","demain","dəmɛ̃","tomorrow","təˈmɒrəʊ","domani","doˈmaːni","завтра","ˈzaftrə","mañana","maˈɲana","amanhã","ɐmɐˈɲɐ̃"],["das Datum","das ˈdaːtʊm","la date","la dat","date","","data","ˈdaːta","дата","","fecha","ˈfetʃa","data",""],["der Abend","deːɐ ˈaːbənt","le soir","lə swaʁ","evening","","sera","ˈseːra","вечер","","tarde-noche","taɾðeˈnotʃe","noite",""],["der April","deːɐ ˈaːpʁɪl","avril","avʁil","April","","aprile","aˈpriːle","апрель","","abril","aˈβɾil","abril",""],["der August","deːɐ ˈaʊɡʊst","août","ut","August","","agosto","aˈɡosto","август","","agosto","aˈɣosto","agosto",""],["der Februar","deːɐ ˈfeːbʁʊaɐ","février","fevʁjɛʁ","February","","febbraio","febˈbraːjo","февраль","","febrero","feˈβɾeɾo","fevereiro",""]]]},"loisirs":{"icon":"🎵","sets":[[["das Ballett","das ˈbalət","le ballet","lə balɛ","ballet","","balletto","balˈlɛtto","балет","","ballet","baˈʎet","ballet",""],["das Foto","das ˈfoːtɔ","la photographie","la fɔtɔɡʁafi","photo","","fotografia","fotoˈɡrafja","фотография","","fotografía","fotoɣɾaˈfia","fotografia",""],["das Hobby","das ˈhɔbi","le loisir préféré","lə lwaziʁ pʁefeʁe","favorite hobby","","passatempo preferito","passaˈtempo prefeˈriːto","любимое хобби","","afición favorita","afiˈθjon faβoˈɾita","passatempo preferido",""],["das Konzert","das ˈkɔntsɐt","le concert","lə kɔ̃sɛʁ","concert","","concerto","konˈtʃɛrto","концерт","","concierto","konˈθjeɾto","concerto",""],["der Ball","deːɐ bal","la balle","la bal","ball","","palla; pallone","ˈpalla palˈloːne","мяч","","pelota; balón","peˈlota baˈlon","bola",""],["der Film","deːɐ fɪlm","le film","lə film","film","","film","film","фильм","","película","peˈlikula","filme",""],["der Fußball","deːɐ ˈfʊsbal","le football","lə foɔtbal","football","","calcio","ˈkaltʃo","футбол","","fútbol","ˈfutbol","futebol",""],["der Wettkampf","deːɐ ˈvɛtkampf","la compétition","la kɔ̃petitjɔ̃","competition","","competizione","kompetiˈtsjoːne","соревнование","","competición","kompetiˈθjon","competição",""]],[["die Fete","diː ˈfeːtə","la fête entre amis","la fɛt ɑ̃tʁ ami","party","","festa","ˈfesta","вечеринка","","fiesta","ˈfjesta","festa",""],["die Flöte","diː ˈfløːtə","la flûte","la flyt","flute","","flauto","flaˈuːto","флейта","","flauta","flaˈuta","flauta",""],["die Freizeit","diː ˈfʁaɪtsaɪt","le temps libre","lə tɑ̃p libʁ","free time; leisure","","tempo libero","ˈtempo liˈbeːro","свободное время; досуг","","tiempo libre","ˈtjempo ˈliβɾe","tempo livre",""],["die Geige","diː ɡaɪˈɡɛ","le violon","lə vjɔlɔ̃","violin","","violino","vjoˈliːno","скрипка","","violín","bioˈlin","violino",""],["die Party","diː ˈpaːɐti","la fête","la fɛt","party","","festa","ˈfesta","вечеринка","","fiesta","ˈfjesta","festa",""]]]},"medias":{"icon":"✉","sets":[[["das Handy","das ˈhɛndi","le téléphone portable","lə telefɔn pɔʁtabl","mobile phone","","cellulare","tʃelluˈlaːre","мобильный телефон","","teléfono móvil","teˈlefono ˈmoβil","telemóvel",""],["der Anruf","deːɐ ˈanʁʊf","l'appel téléphonique","lapɛl telefɔnik","phone call","","telefonata","telefoˈnaːta","телефонный звонок","","llamada telefónica","ʎaˈmaða teleˈfonika","telefonema",""],["der Brief","deːɐ bʁiːf","la lettre","la lɛtʁ","letter","","lettera","letˈteːra","письмо","","carta","ˈkaɾta","carta",""],["der Drucker","deːɐ ˈdʁʊkɐ","l'imprimante","lɛ̃pʁimɑ̃t","printer","","stampante","stamˈpante","принтер","","impresora","impɾeˈsoɾa","impressora",""],["die Datei","diː daˈtaɪ","le fichier","lə fiʃjɛʁ","file","","file","ˈfiːle","файл","","archivo","aɾˈtʃiβo","ficheiro",""],["die Daten","diː ˈdaːtən","les données","le dɔneɛ","data","","dati","ˈdaːti","данные","","datos","ˈdatos","dados",""],["die E-Mail","diː ˈɛmaɪl","mèl","mɛl","email","","e-mail","eˈmaːil","электронная почта","","correo electrónico","koˈreo elekˈtɾoniko","e-mail",""],["die Mail","diː maɪl","le courriel","lə kuʁjɛl","email","","e-mail","eˈmaːil","электронное письмо","","correo","koˈreo","e-mail",""],["die Sendung","diː ˈzɛndʊŋ","l'émission","lemisjɔ̃","broadcast; program","","trasmissione","trasmisˈsjoːne","передача","","programa","pɾoˈɣɾama","emissão",""],["die Zeitung","diː ˈtsaɪtʊŋ","le journal","lə ʒuʁnal","newspaper","","giornale","dʒorˈnaːle","газета","","periódico","peɾjoˈðiko","jornal",""]]]},"travail":{"icon":"💼","sets":[[["der Bürgermeister","deːɐ ˈbʏʁɡɐmaɪstɐ","le maire","lə mɛʁ","the mayor","ðə meə","il sindaco","il ˈsindako","мэр","mɛr","el alcalde","el alˈkalde","o presidente da câmara","u pɾɨziˈdẽtə dɐ ˈkɐmɐɾɐ"],["das Büro","das byˈʁoː","le bureau","lə byʁo","office","","ufficio","ufˈfiːtʃo","офис","","oficina","ofiˈθina","escritório",""],["das Geld","das ɡɛlt","l'argent","laʁʒɑ̃","money","","denaro","deˈnaːro","деньги","","dinero","diˈneɾo","dinheiro",""],["der Beruf","deːɐ bɐˈʊf","le métier","lə metjɛʁ","profession","","professione","profesˈsjoːne","профессия","","profesión","pɾofeˈsjon","profissão",""],["der Betrieb","deːɐ bəˈtʁiːp","l'entreprise","lɑ̃tʁɛpʁiz","company; enterprise","","azienda","aˈtsjenda","предприятие","","empresa","emˈpɾesa","empresa",""],["der Job","deːɐ dʒɔp","le job","lə ʒob","job","","lavoro","laˈvoːro","работа","","trabajo","tɾaˈβaxo","emprego",""],["der Kunde","deːɐ ˈkʊndə","le client","lə kljɑ̃","customer","","cliente","ˈkljɛnte","клиент","","cliente","ˈkljente","cliente",""],["der Lohn","deːɐ loːn","le salaire","lə salɛʁ","wage; salary","","stipendio","stiˈpendjo","зарплата","","salario","saˈlaɾjo","salário",""]],[["der Preis","deːɐ pʁaɪs","le prix","lə pʁi","price","","prezzo","ˈprettso","цена","","precio","ˈpɾeθjo","preço",""],["die Arbeit","diː aʁˈbaɪt","le travail","lə tʁavɛl","work","","lavoro","laˈvoːro","работа","","trabajo","tɾaˈβaxo","trabalho",""],["die Fabrik","diː ˈfaːbʁɪk","l'usine","lyzin","factory","","fabbrica","fabˈbriːka","фабрика; завод","","fábrica","ˈfaβɾika","fábrica",""],["die Firma","diː ˈfɪʁma","la firme","la fiʁm","company; firm","","ditta","ˈditta","фирма","","empresa","emˈpɾesa","firma",""]]]},"verbes":{"icon":"⚡","sets":[[["erklären","ɛɐˈklɛːʁən","expliquer","ɛksplikɛʁ","to explain","tʊ ɪkˈspleɪn","spiegare","spjeˈɡaːre","объяснять","ɐbjɪsˈnʲatʲ","explicar","ekspliˈkaɾ","explicar","ɨʃpliˈkaɾ"],["erreichen","ɛɐˈraɪçən","atteindre","atɛ̃dʁ","to reach","tə riːtʃ","raggiungere","radˈdʒundʒere","достигать","dəsʲtʲɪˈɡatʲ","alcanzar","alkanˈθaɾ","alcançar","alkɐ̃ˈsaɾ"],["essen","ˈɛsən","manger","mɑ̃ʒɛʁ","to eat","tʊ iːt","mangiare","manˈdʒaːre","есть","jesʲtʲ","comer","koˈmeɾ","comer","kuˈmeɾ"],["finden","ˈfɪndən","trouver","tʁuvɛʁ","to find","tə faɪnd","trovare","troˈvaːre","находить","nəxɐˈdʲitʲ","encontrar","eŋkonˈtɾaɾ","encontrar","ẽkõˈtɾaɾ"],["gehen","ˈɡeːən","aller","alɛʁ","to go","tə ɡəʊ","andare","anˈdaːre","идти","ɪtˈtʲi","ir","iɾ","ir","iɾ"],["haben","ˈhaːbən","avoir","avwaʁ","to have","tə hæv","avere","aˈveːre","иметь","ɪˈmʲetʲ","tener","teˈneɾ","ter","teɾ"],["helfen","ˈhɛlfən","aider","ɛdɛʁ","to help","tə help","aiutare","ajuˈtaːre","помогать","pəmɐˈɡatʲ","ayudar","aʝuˈðaɾ","ajudar","ɐʒuˈdaɾ"],["kaufen","ˈkaʊfən","acheter","aʃətɛʁ","to buy","tə baɪ","comprare","komˈpraːre","покупать","pəkʊˈpatʲ","comprar","komˈpɾaɾ","comprar","kõˈpɾaɾ"]],[["kommen","ˈkɔmən","venir","vəniʁ","to come","tə kʌm","venire","veˈniːre","приходить","prʲɪxɐˈdʲitʲ","venir","beˈniɾ","vir","viɾ"],["laufen","ˈlaʊfən","courir","kuʁiʁ","to run","tə rʌn","correre","ˈkorrere","бежать","bʲɪˈʐatʲ","correr","koˈreɾ","correr","kuˈʁeɾ"],["lernen","ˈlɛʁnən","apprendre","apʁɑ̃dʁ","to learn","tə lɜːn","imparare","impaˈraːre","учиться","ʊˈtɕitsə","aprender","apɾenˈdeɾ","aprender","ɐpɾẽˈdeɾ"],["lesen","ˈleːzən","lire","liʁ","to read","tə riːd","leggere","ˈlɛddʒere","читать","tɕɪˈtatʲ","leer","leˈeɾ","ler","leɾ"],["machen","ˈmaxən","faire","fɛʁ","to do","tə duː","fare","ˈfaːre","делать","ˈdʲelətʲ","hacer","aˈθeɾ","fazer","fɐˈzeɾ"],["schlafen","ˈʃlaːfən","dormir","dɔʁmiʁ","to sleep","tə sliːp","dormire","dorˈmiːre","спать","spatʲ","dormir","doɾˈmiɾ","dormir","duɾˈmiɾ"],["schreiben","ˈʃraɪbən","écrire","ekʁiʁ","to write","tə raɪt","scrivere","ˈskriːvere","писать","pʲɪˈsatʲ","escribir","eskɾiˈβiɾ","escrever","ɨʃkɾɨˈveɾ"],["sehen","ˈzeːən","voir","vwaʁ","to see","tə siː","vedere","veˈdeːre","видеть","ˈvʲidʲɪtʲ","ver","beɾ","ver","veɾ"]],[["sein","zaɪn","être","ɛtʁ","to be","tə biː","essere","ˈɛssere","быть","bɨtʲ","ser","seɾ","ser","seɾ"],["spielen","ˈʃpiːlən","jouer","ʒwɛʁ","to play","tə pleɪ","giocare","dʒoˈkaːre","играть","ɪˈɡratʲ","jugar","xuˈɣaɾ","jogar","ʒuˈɣaɾ"],["suchen","ˈzuːxən","chercher","ʃɛʁʃɛʁ","to search","tə sɜːtʃ","cercare","tʃerˈkaːre","искать","ɪsˈkatʲ","buscar","busˈkaɾ","procurar","pɾukuˈɾaɾ"],["trinken","ˈtrɪŋkən","boire","bwaʁ","to drink","tə drɪŋk","bere","ˈbeːre","пить","pʲitʲ","beber","beˈβeɾ","beber","bɨˈbeɾ"],["vergessen","fɛɐˈɡɛsən","oublier","ubljɛʁ","to forget","tə fəˈɡet","dimenticare","dimentiˈkaːre","забывать","zəbɨˈvatʲ","olvidar","olβiˈðaɾ","esquecer","ɨʃkɨˈseɾ"],["verlassen","fɛɐˈlasən","quitter","kitɛʁ","to leave","tə liːv","lasciare","laʃˈʃaːre","покидать","pəkʲɪˈdatʲ","abandonar","aβandoˈnaɾ","abandonar","ɐbɐ̃duˈnaɾ"],["verstehen","fɛɐˈʃteːən","comprendre","kɔ̃pʁɑ̃dʁ","to understand","tʊ ʌndəˈstænd","capire","kaˈpiːre","понимать","pənʲɪˈmatʲ","entender","entenˈdeɾ","entender","ẽtẽˈdeɾ"],["überlegen","yːbɐˈleːɡən","réfléchir","ʁefleʃiʁ","to consider","tə kənˈsɪdə","riflettere","riˈflɛttere","обдумывать","ɐbˈdumɨvətʲ","reflexionar","refleksjoˈnaɾ","refletir","ʁɨflɨˈtiɾ"]]]},"adjectifs":{"icon":"◆","sets":[[["alt","alt","vieux","vjœ","old","əʊld","vecchio","ˈvɛkkjo","старый","ˈstarɨj","viejo","ˈbjexo","velho","ˈvɛʎu"],["begeistert","bəˈɡaɪstɐt","enthousiaste","ɑ̃tuzjast","enthusiastic","ɪnθjuːzɪˈæstɪk","entusiasta","entuˈzjasta","восторженный","vɐsˈtorʐɨnːɨj","entusiasmado","entusjazˈmaðo","entusiasmado","ẽtuzjɐʒˈmadu"],["enttäuscht","ɛntˈtɔɪʃt","déçu","desy","disappointed","dɪsəˈpɔɪntɪd","deluso","deˈluːzo","разочарованный","rəzətɕɪˈrovənːɨj","decepcionado","deθepθjoˈnaðo","desapontado","dɨzɐpõˈtadu"],["faul","faʊl","paresseux","paʁɛsœ","lazy","ˈleɪzi","pigro","ˈpiːɡro","ленивый","lʲɪˈnʲivɨj","perezoso","peɾeˈθoso","preguiçoso","pɾɨɡiˈsozu"],["fleißig","ˈflaɪsɪç","travailleur","tʁavɛlœʁ","hard-working","hɑːd ˈwɜːkɪŋ","diligente","diliˈdʒɛnte","прилежный","prʲɪˈlʲeʐnɨj","trabajador","tɾaβaxaˈðoɾ","trabalhador","tɾɐbɐʎɐˈdoɾ"],["freundlich","ˈfrɔɪntlɪç","aimable","ɛmabl","friendly","ˈfrendli","gentile","dʒenˈtiːle","дружелюбный","drʊʐɨˈlʲubnɨj","amable","aˈmaβle","amável","ɐˈmavɛl"],["glücklich","ˈɡlʏklɪç","heureux","œʁœ","happy","ˈhæpi","felice","feˈliːtʃe","счастливый","ɕɕɪˈslʲivɨj","feliz","feˈliθ","feliz","fɨˈliʃ"],["groß","ɡroːs","grand","ɡʁɑ̃","big","bɪɡ","grande","ˈɡrande","большой","bɐlʲˈʂoj","grande","ˈɡɾande","grande","ˈɡɾɐ̃də"]],[["gut","ɡuːt","bon","bɔ̃","good","ɡʊd","buono","ˈbwɔːno","хороший","xɐˈroʂɨj","bueno","ˈbweno","bom","bõ"],["hilfsbereit","ˈhɪlfsbəraɪt","serviable","sɛʁvjabl","helpful","ˈhelpfl","disponibile","dispoˈniːbile","отзывчивый","ɐdˈzɨftɕɪvɨj","servicial","seɾβiˈθjal","prestável","pɾɨʃˈtavɛl"],["jung","jʊŋ","jeune","ʒœn","young","jʌŋ","giovane","ˈdʒoːvane","молодой","məlɐˈdoj","joven","ˈxoβen","jovem","ˈʒɔvɐ̃j"],["klein","klaɪn","petit","pəti","small","smɔːl","piccolo","ˈpikkolo","маленький","ˈmalʲɪnʲkʲɪj","pequeño","peˈkeɲo","pequeno","pɨˈkenu"],["krank","kraŋk","malade","malad","sick","sɪk","malato","maˈlaːto","больной","bɐlʲˈnoj","enfermo","emˈfeɾmo","doente","duˈẽtə"],["lustig","ˈlʊstɪç","drôle","dʁol","funny","ˈfʌni","divertente","diverˈtɛnte","смешной","smʲɪʂˈnoj","gracioso","ɡɾaˈθjoso","engraçado","ẽɡɾɐˈsadu"],["müde","ˈmyːdə","fatigué","fatiɡye","tired","ˈtaɪəd","stanco","ˈstaŋko","усталый","ʊsˈtalɨj","cansado","kanˈsaðo","cansado","kɐ̃ˈsadu"],["neugierig","ˈnɔɪɡiːʁɪç","curieux","kyʁjœ","curious","ˈkjʊərɪəs","curioso","kuˈrjoːzo","любопытный","lʲʉbɐˈpɨtnɨj","curioso","kuˈɾjoso","curioso","kuɾiˈozu"]],[["schlecht","ʃlɛçt","mauvais","movɛ","bad","bæd","cattivo","katˈtiːvo","плохой","plɐˈxoj","malo","ˈmalo","mau","maw"],["schnell","ʃnɛl","rapide","ʁapid","fast","fɑːst","veloce","veˈloːtʃe","быстрый","ˈbɨstrɨj","rápido","ˈrapiðo","rápido","ˈʁapidu"],["schön","ʃøːn","beau","bo","beautiful","ˈbjuːtɪfl","bello","ˈbɛllo","красивый","krɐˈsʲivɨj","bonito","boˈnito","bonito","buˈnitu"],["schüchtern","ˈʃʏçtɐn","timide","timid","shy","ʃaɪ","timido","ˈtiːmido","застенчивый","zɐˈsʲtʲentɕɪvɨj","tímido","ˈtimiðo","tímido","ˈtimidu"],["selbstsicher","ˈzɛlpstzɪçɐ","sûr de soi","syʁ də swa","self-confident","self ˈkɒnfɪdənt","sicuro di sé","siˈkuːro di se","уверенный","ʊˈvʲerʲɪnːɨj","seguro de sí","seˈɣuɾo ðe si","autoconfiante","awtokõfiˈɐ̃tə"],["stolz","ʃtɔlts","fier","fjɛʁ","proud","praʊd","orgoglioso","orɡoʎˈʎoːzo","гордый","ˈɡordɨj","orgulloso","oɾɣuˈʎoso","orgulhoso","oɾɡuˈʎozu"],["traurig","ˈtraʊʁɪç","triste","tʁist","sad","sæd","triste","ˈtriste","грустный","ˈɡrusnɨj","triste","ˈtɾiste","triste","ˈtɾiʃtə"],["wichtig","ˈvɪçtɪç","important","ɛ̃pɔʁtɑ̃","important","ɪmˈpɔːtnt","importante","imporˈtante","важный","ˈvaʐnɨj","importante","impoɾˈtante","importante","ĩpuɾˈtɐ̃tə"]]]}};
 
 </script>
@@ -1268,11 +1415,12 @@ const VOCAB={"animaux":{"icon":"🐾","sets":[[["das Pferd","das pfeːɐt","le c
 document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
 document.getElementById('p-profile').classList.remove('hidden');
 
-const LANGS={de:{n:"Deutsch",f:"🇩🇪",i:0},fr:{n:"Français",f:"🇫🇷",i:2},
- en:{n:"English",f:"🇬🇧",i:4},it:{n:"Italiano",f:"🇮🇹",i:6},
- ru:{n:"Русский",f:"🇷🇺",i:8},es:{n:"Español",f:"🇪🇸",i:10},pt:{n:"Português",f:"🇵🇹",i:12}};
-const PHON_OK=['de','fr','es','it'];
-/* v = durée de chute (s) · g = rythme d'apparition (s) */
+const STORE_KEY='lexio_'+(typeof APPID!=='undefined'?APPID:'default');
+/* LANGS, PHON_OK et APPID sont fournis par le bloc de données de chaque application */
+const NATIVE_OK=Object.keys(LANGS).filter(k=>LANGS[k].ui);
+const LANG_KEYS=Object.keys(LANGS);
+function okLang(k){ return k && LANGS[k]; }
+
 const SPEEDS=[{k:'slow',v:16,g:4},{k:'medium',v:11,g:3},{k:'fast',v:7.5,g:2.2},
               {k:'veryFast',v:5,g:1.6},{k:'extreme',v:3.2,g:1.1}];
 const LANES=[-1,0,1];      /* couloirs horizontaux pour éviter les recouvrements */
@@ -1297,9 +1445,9 @@ const ALL='__all__';
 /* ══ STOCKAGE (dégradation propre si indisponible) ══ */
 let memDB={profiles:{},last:null}, canSave=true;
 const DB={
-  load(){ try{ const r=localStorage.getItem('lexio_v1');
+  load(){ try{ const r=localStorage.getItem(STORE_KEY);
       if(r) memDB=JSON.parse(r); }catch(e){ canSave=false; } return memDB; },
-  save(){ try{ localStorage.setItem('lexio_v1',JSON.stringify(memDB)); }
+  save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(memDB)); }
     catch(e){ canSave=false; } }
 };
 DB.load();
@@ -1327,20 +1475,31 @@ for(const th in VOCAB) VOCAB[th].sets.forEach(s=>s.forEach(w=>ALLW.push({th,w}))
 const keyOf=w=>w[0];
 
 function newProfile(name){
-  return {name,native:ui,learn:(ui==='de'?'en':'de'),phon:true,both:false,
+  const nat=(NATIVE_OK.indexOf(ui)>=0?ui:(NATIVE_OK[0]||LANG_KEYS[0]));
+  return {name,native:nat,learn:(LANG_KEYS.find(k=>k!==nat)||nat),phon:true,both:false,
           revise:false,fw:1,fi:1,known:{},stat:{},
           games:0,right:0,ans:0,size:10,speed:1};
 }
 function migrate(p){
   if(!p) return p;
-  if(!p.native) p.native = p.tgt || p.ui || 'fr';    /* langue connue */
-  if(!p.learn)  p.learn  = p.src || 'de';            /* langue apprise */
-  if(p.native===p.learn) p.learn = (p.native==='de'?'fr':'de');
+  /* un profil enregistré par une autre version peut nommer des langues
+     absentes d'ici : on repart alors sur un choix valide.              */
+  const firstNative = NATIVE_OK[0] || LANG_KEYS[0];
+  if(!okLang(p.native) || !LANGS[p.native].ui){
+    p.native = okLang(p.tgt) && LANGS[p.tgt].ui ? p.tgt
+             : (okLang(p.ui) && LANGS[p.ui] && LANGS[p.ui].ui ? p.ui : firstNative);
+  }
+  if(!okLang(p.learn)){
+    p.learn = okLang(p.src) ? p.src : (LANG_KEYS.find(k=>k!==p.native) || firstNative);
+  }
+  if(p.native===p.learn){
+    p.learn = LANG_KEYS.find(k=>k!==p.native) || firstNative;
+  }
   if(p.fw===undefined) p.fw=1;
   if(p.fi===undefined) p.fi=1;
   if(p.revise===undefined) p.revise=false;
-  p.ui=p.native;
-  /* le mot qui tombe est dans la langue APPRISE, la proposition dans la langue connue */
+  p.ui = (LANGS[p.native] && LANGS[p.native].ui) || 'fr';
+  if(!I18N[p.ui]) p.ui='fr';
   p.src=p.learn; p.tgt=p.native;
   return p;
 }
@@ -1395,14 +1554,23 @@ function paintAll(){
 function paintProfile(){
   /* les puces sont déjà dans le HTML : on ne fait que les activer */
   const c=document.getElementById('ui-langs');
-  const existing=(c&&c.querySelectorAll)?c.querySelectorAll('[data-ui]'):[];
+  c.innerHTML='';
+  NATIVE_OK.forEach(k=>{
+    const d=document.createElement('div');
+    d.className='chip'+(P&&P.native===k?' on':(!P&&ui===k?' on':''));
+    d.innerHTML='<span class="fl">'+LANGS[k].f+'</span><span>'+LANGS[k].n+'</span>';
+    d.onclick=()=>{ ui=LANGS[k].ui; if(P){P.native=k; P.ui=ui;
+      if(P.learn===k) P.learn=(LANG_KEYS.find(x=>x!==k)||k); saveP();} paintAll(); };
+    c.appendChild(d);
+  });
+  const existing=[];
   if(existing.length){
     for(let i=0;i<existing.length;i++){
       const d=existing[i], k=d.getAttribute('data-ui');
       if(k===ui) d.classList.add('on'); else d.classList.remove('on');
       if(!d.__b){ d.__b=1;
         const pick=function(ev){ if(ev&&ev.cancelable)ev.preventDefault();
-          ui=k; if(P){P.native=k; if(P.learn===k)P.learn=(k==='de'?'fr':'de'); saveP();} paintAll(); };
+          ui=k; if(P){P.native=k; if(P.learn===k)P.learn='vor'; saveP();} paintAll(); };
         d.addEventListener('click',pick);
         d.addEventListener('touchend',pick,{passive:false});
       }
@@ -1477,6 +1645,7 @@ function refreshHome(){
   S('h-known',kn); S('h-left',ALLW.length-kn);
   S('h-acc', P.ans? Math.round(P.right/P.ans*100)+'%' : '—');
   S('h-games',P.games);
+  if(!okLang(P.native)||!okLang(P.learn)){ migrate(P); saveP(); }
   S('pv-a',LANGS[P.native].f+' '+LANGS[P.native].n);
   S('pv-b',LANGS[P.learn].f+' '+LANGS[P.learn].n);
   S('who',P.name);
@@ -1499,10 +1668,38 @@ function paintLearn(){
   S('pv-lrn',LANGS[P.learn].f+' '+LANGS[P.learn].n);
   S('phon-warn',PHON_OK.includes(P.learn)?'':t.phonWarn);
   S('b-lrn-back',t.back); S('b-lrn-next',t.continueBtn);
+  S('b-pron-see',t.pronGuide);
 }
 function togPhon(){ P.fi = P.fi>0?0:2; applyFonts(); saveP(); paintSettings(); }
 function togBoth(){ P.both=!P.both; saveP(); paintSettings(); }
 function togRevise(){ P.revise=!P.revise; saveP(); paintSettings(); }
+
+/* ══ PRONONCIATION ══ */
+let pronBack='p-learn';
+function openPron(){
+  pronBack = document.getElementById('p-set').classList.contains('hidden') ? 'p-learn' : 'p-set';
+  if(!okLang(P.learn)){ migrate(P); saveP(); }
+  const t=T(), g=PRON[P.learn];
+  S('t-pron', t.pronGuide+' — '+LANGS[P.learn].n);
+  S('pron-note', g? g.note : '');
+  S('b-pron-ok', t.continueBtn);
+  const c=document.getElementById('pron-tab'); c.innerHTML='';
+  if(g) g.rows.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='pr';
+    d.innerHTML='<span class="a">'+esc(r[0])+'</span><span class="b">'+
+      '<span class="b1">'+esc(r[1])+'</span>'+
+      (r[2]?'<span class="b2">'+esc(r[2])+'</span>':'')+'</span>';
+    c.appendChild(d);
+  });
+  document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('p-pron').classList.remove('hidden');
+  document.getElementById('top').classList.remove('hidden');
+}
+function closePron(){
+  if(pronBack==='p-set'){ openSettings(); return; }
+  openLearn();
+}
 
 /* ══ RÉGLAGES (accessibles aussi en cours de partie) ══ */
 let setBack='p-home';
@@ -1540,12 +1737,12 @@ function paintSettings(){
   S('l-spd',t.speed); S('l-lsz',t.listSize); S('l-tsz',t.textSize); S('l-isz',t.ipaSize);
   /* langue maternelle */
   const cn=document.getElementById('set-native'); cn.innerHTML='';
-  for(const k in LANGS){
+  for(const k of NATIVE_OK){
     const d=document.createElement('div');
     d.className='chip'+(P.native===k?' on':'');
     d.innerHTML=`<span class="fl">${LANGS[k].f}</span><span>${LANGS[k].n}</span>`;
-    d.onclick=()=>{ P.native=k; if(I18N[k]){ui=k;P.ui=k;}
-      if(P.learn===k) P.learn=(k==='de'?'fr':'de');
+    d.onclick=()=>{ P.native=k; ui=LANGS[k].ui; P.ui=ui;
+      if(P.learn===k) P.learn=(LANG_KEYS.find(x=>x!==k)||k);
       saveP(); paintAll(); paintSettings(); };
     cn.appendChild(d);
   }
@@ -1560,6 +1757,7 @@ function paintSettings(){
     cl.appendChild(d);
   }
   S('l-both2',t.bothWays); S('l-rev',t.revise); S('h-rev',t.reviseHelp);
+  S('b-pron-see2',t.pronGuide);
   document.getElementById('tog-both2').classList.toggle('on',!!P.both);
   document.getElementById('tog-rev').classList.toggle('on',!!P.revise);
   /* vitesse */
